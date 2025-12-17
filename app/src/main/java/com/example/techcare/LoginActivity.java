@@ -1,24 +1,35 @@
 package com.example.techcare;
 
+import android.content.Intent;
 import android.os.Bundle;
-
-import androidx.activity.EdgeToEdge;
+import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 public class LoginActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_login);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
+
+        // 1. Link the "Sign Up" text
+        TextView signUpText = findViewById(R.id.tv_signup);
+        if (signUpText != null) {
+            signUpText.setOnClickListener(v -> {
+                Intent intent = new Intent(LoginActivity.this, SignupActivity.class);
+                startActivity(intent);
+            });
+        }
+
+        // 2. Link the "Forgot Password?" text
+        // FIXED: Now looking for the correct ID 'tv_forgot_pass'
+        TextView forgotPassText = findViewById(R.id.tv_forgot_pass);
+
+        if (forgotPassText != null) {
+            forgotPassText.setOnClickListener(v -> {
+                Intent intent = new Intent(LoginActivity.this, ForgotPasswordActivity.class);
+                startActivity(intent);
+            });
+        }
     }
 }
