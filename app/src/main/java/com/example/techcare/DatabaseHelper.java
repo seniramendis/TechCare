@@ -10,7 +10,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "TechCare.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3; // IMPORTANT: Version 3
 
     // Users Table
     private static final String TABLE_USERS = "users";
@@ -18,6 +18,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COL_NAME = "name";
     private static final String COL_EMAIL = "email";
     private static final String COL_PASSWORD = "password";
+    private static final String COL_IMAGE = "profile_image"; // New Column
 
     // Bookings Table
     private static final String TABLE_BOOKINGS = "bookings";
@@ -34,12 +35,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // Create Users Table
+        // Create Users Table with Image Column
         String createUsers = "CREATE TABLE " + TABLE_USERS + " (" +
                 COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 COL_NAME + " TEXT, " +
                 COL_EMAIL + " TEXT UNIQUE, " +
-                COL_PASSWORD + " TEXT)";
+                COL_PASSWORD + " TEXT, " +
+                COL_IMAGE + " TEXT)";
         db.execSQL(createUsers);
 
         // Create Bookings Table
@@ -67,6 +69,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         contentValues.put(COL_NAME, name);
         contentValues.put(COL_EMAIL, email);
         contentValues.put(COL_PASSWORD, password);
+        contentValues.put(COL_IMAGE, "");
 
         long result = db.insert(TABLE_USERS, null, contentValues);
         return result != -1;
@@ -81,11 +84,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return exists;
     }
 
-    // --- NEW METHOD: Get User Name for Header ---
     @SuppressLint("Range")
     public String getUserName(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
-        String name = "User"; // Default fallback
+        String name = "User";
         Cursor cursor = db.rawQuery("SELECT " + COL_NAME + " FROM " + TABLE_USERS +
                 " WHERE " + COL_EMAIL + " = ?", new String[]{email});
 
@@ -96,7 +98,30 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return name;
     }
 
-    // --- BOOKING METHODS ---
+    // --- NEW: Get Profile Image ---
+    @SuppressLint("Range")
+    public String getUserImage(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String imageUri = "";
+        Cursor cursor = db.rawQuery("SELECT " + COL_IMAGE + " FROM " + TABLE_USERS +
+                " WHERE " + COL_EMAIL + " = ?", new String[]{email});
+
+        if (cursor.moveToFirst()) {
+            imageUri = cursor.getString(cursor.getColumnIndex(COL_IMAGE));
+        }
+        cursor.close();
+        return imageUri;
+    }
+
+    // --- NEW: Update Profile Image ---
+    public boolean updateUserImage(String email, String imageUri) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(COL_IMAGE, imageUri);
+        int rows = db.update(TABLE_USERS, cv, COL_EMAIL + " = ?", new String[]{email});
+        return rows > 0;
+    }
+
     public boolean addBooking(String email, String device, String issue, String type) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -105,7 +130,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cv.put(COL_ISSUE, issue);
         cv.put(COL_TYPE, type);
         cv.put(COL_STATUS, "Received");
-
         long result = db.insert(TABLE_BOOKINGS, null, cv);
         return result != -1;
     }
