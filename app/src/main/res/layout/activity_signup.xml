@@ -28,8 +28,7 @@
         app:cardElevation="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.5"
-        tools:layout_editor_absoluteX="24dp">
+        app:layout_constraintVertical_bias="0.5">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -44,8 +43,7 @@
                 android:text="Create Account"
                 android:textColor="@color/text_primary"
                 android:textSize="26sp"
-                android:textStyle="bold"
-                tools:ignore="HardcodedText" />
+                android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -54,8 +52,7 @@
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="24dp"
                 android:text="Join TechCare today"
-                android:textColor="@color/text_secondary"
-                tools:ignore="HardcodedText" />
+                android:textColor="@color/text_secondary" />
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -65,10 +62,10 @@
                 app:boxStrokeColor="@color/brand_primary"
                 app:hintTextColor="@color/brand_primary"
                 app:startIconDrawable="@android:drawable/ic_menu_myplaces"
-                app:startIconTint="@color/text_hint"
-                tools:ignore="HardcodedText">
+                app:startIconTint="@color/text_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_signup_name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textPersonName"
@@ -85,10 +82,10 @@
                 app:boxStrokeColor="@color/brand_primary"
                 app:hintTextColor="@color/brand_primary"
                 app:startIconDrawable="@android:drawable/ic_dialog_email"
-                app:startIconTint="@color/text_hint"
-                tools:ignore="HardcodedText">
+                app:startIconTint="@color/text_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_signup_email"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textEmailAddress"
@@ -107,10 +104,10 @@
                 app:passwordToggleEnabled="true"
                 app:passwordToggleTint="@color/text_hint"
                 app:startIconDrawable="@android:drawable/ic_lock_idle_lock"
-                app:startIconTint="@color/text_hint"
-                tools:ignore="HardcodedText">
+                app:startIconTint="@color/text_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_signup_password"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textPassword"
@@ -128,8 +125,7 @@
                 android:textColor="@color/text_primary"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                app:cornerRadius="12dp"
-                tools:ignore="HardcodedText" />
+                app:cornerRadius="12dp" />
 
         </LinearLayout>
     </androidx.cardview.widget.CardView>
@@ -148,8 +144,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Already have an account? "
-            android:textColor="@color/text_secondary"
-            tools:ignore="HardcodedText" />
+            android:textColor="@color/text_secondary" />
 
         <TextView
             android:id="@+id/tv_login_link"
@@ -158,8 +153,7 @@
             android:text="Login"
             android:textColor="@color/brand_primary"
             android:textStyle="bold"
-            android:paddingStart="4dp"
-            tools:ignore="HardcodedText,RtlSymmetry" />
+            android:paddingStart="4dp" />
     </LinearLayout>
 
     <ImageView
