@@ -10,7 +10,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "TechCare.db";
-    private static final int DATABASE_VERSION = 3; // IMPORTANT: Version 3
+    private static final int DATABASE_VERSION = 3;
 
     // Users Table
     private static final String TABLE_USERS = "users";
@@ -18,7 +18,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COL_NAME = "name";
     private static final String COL_EMAIL = "email";
     private static final String COL_PASSWORD = "password";
-    private static final String COL_IMAGE = "profile_image"; // New Column
+    private static final String COL_IMAGE = "profile_image";
 
     // Bookings Table
     private static final String TABLE_BOOKINGS = "bookings";
@@ -35,7 +35,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // Create Users Table with Image Column
         String createUsers = "CREATE TABLE " + TABLE_USERS + " (" +
                 COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 COL_NAME + " TEXT, " +
@@ -44,7 +43,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 COL_IMAGE + " TEXT)";
         db.execSQL(createUsers);
 
-        // Create Bookings Table
         String createBookings = "CREATE TABLE " + TABLE_BOOKINGS + " (" +
                 COL_BOOKING_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 COL_USER_EMAIL + " TEXT, " +
@@ -98,7 +96,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return name;
     }
 
-    // --- NEW: Get Profile Image ---
     @SuppressLint("Range")
     public String getUserImage(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
@@ -113,7 +110,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return imageUri;
     }
 
-    // --- NEW: Update Profile Image ---
     public boolean updateUserImage(String email, String imageUri) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -122,6 +118,25 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return rows > 0;
     }
 
+    // --- FORGOT PASSWORD METHODS (NEW) ---
+    public boolean checkEmail(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_USERS + " WHERE " +
+                COL_EMAIL + " = ?", new String[]{email});
+        boolean exists = cursor.getCount() > 0;
+        cursor.close();
+        return exists;
+    }
+
+    public boolean updatePassword(String email, String newPassword) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(COL_PASSWORD, newPassword);
+        int rows = db.update(TABLE_USERS, contentValues, COL_EMAIL + " = ?", new String[]{email});
+        return rows > 0;
+    }
+
+    // --- BOOKING METHODS ---
     public boolean addBooking(String email, String device, String issue, String type) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
