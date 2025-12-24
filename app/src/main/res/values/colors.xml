@@ -12,5 +12,6 @@
     <color name="text_hint">#90A4AE</color>
 
     <color name="nav_active_green">#B2FF59</color>
-    <color name="nav_inactive_bright">#CFD8DC</color> <color name="brand_accent">#00B4D8</color>
+    <color name="nav_inactive_bright">#CFD8DC</color>
+    <color name="brand_accent">#00B4D8</color>
 </resources>
