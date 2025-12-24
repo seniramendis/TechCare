@@ -16,12 +16,13 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.CompositePageTransformer;
 import androidx.viewpager2.widget.MarginPageTransformer;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.bumptech.glide.Glide; // Import Glide
+import com.bumptech.glide.Glide;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.ArrayList;
@@ -43,14 +44,56 @@ public class HomeActivity extends AppCompatActivity {
         // 2. Setup Search Bar
         setupSearchBar();
 
-        // 3. Setup Ad Slider (With API Images)
+        // 3. Setup Ad Slider
         setupAdSlider();
 
         // 4. Setup Grid Click Listeners
         setupGrid();
 
-        // 5. Setup Bottom Navigation
+        // 5. Setup Popular Services (NEW CAROUSEL)
+        setupPopularServices();
+
+        // 6. Setup Bottom Navigation
         setupBottomNav();
+    }
+
+    private void setupPopularServices() {
+        RecyclerView recyclerPopular = findViewById(R.id.recycler_popular);
+        recyclerPopular.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+
+        List<PopularService> services = new ArrayList<>();
+
+        // 1. Screen Repair (Hands fixing electronics)
+        services.add(new PopularService(
+                "Screen Repair",
+                "https://images.unsplash.com/photo-1581092921461-39b9d08a9b2a?auto=format&fit=crop&w=600&q=80"
+        ));
+
+        // 2. Battery Fix (Detailed Circuit Board)
+        services.add(new PopularService(
+                "Battery Fix",
+                "https://images.unsplash.com/photo-1550041473-d296a1a8ec02?auto=format&fit=crop&w=600&q=80"
+        ));
+
+        // 3. Virus Cleanup (Hacker / Matrix code style)
+        services.add(new PopularService(
+                "Virus Cleanup",
+                "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&q=80"
+        ));
+
+        // 4. Data Recovery (Server lights)
+        services.add(new PopularService(
+                "Data Recovery",
+                "https://images.unsplash.com/photo-1558494949-ef526b0042a0?auto=format&fit=crop&w=600&q=80"
+        ));
+
+        // 5. OS Install (Laptop Setup)
+        services.add(new PopularService(
+                "OS Install",
+                "https://images.unsplash.com/photo-1593642702749-b7d2a804fbcf?auto=format&fit=crop&w=600&q=80"
+        ));
+
+        recyclerPopular.setAdapter(new PopularServiceAdapter(services));
     }
 
     private void setupAdSlider() {
@@ -58,26 +101,28 @@ public class HomeActivity extends AppCompatActivity {
 
         List<AdItem> ads = new ArrayList<>();
 
-        // Add items with Image URLs
+        // Ad 1: Claim Button
         ads.add(new AdItem(
                 "30% OFF First Repair!",
                 "Use code: TECHNEW30",
-                "https://images.unsplash.com/photo-1581092921461-eab62e97a780?q=80&w=1000&auto=format&fit=crop",
+                "https://images.unsplash.com/photo-1588508065123-287b28e013da?auto=format&fit=crop&w=1000&q=80",
                 "Claim"
         ));
 
+        // Ad 2: No Button (null)
         ads.add(new AdItem(
                 "Same Day Delivery",
-                "Fast repairs for mobiles",
-                "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=1000&auto=format&fit=crop",
-                "View"
+                "We come to you!",
+                "https://images.unsplash.com/photo-1616401784845-180882ba9ba8?auto=format&fit=crop&w=1000&q=80",
+                null
         ));
 
+        // Ad 3: No Button (null)
         ads.add(new AdItem(
                 "Free Diagnostics",
                 "Visit us for a free checkup",
-                "https://images.unsplash.com/photo-1597424214711-41315e06259c?q=80&w=1000&auto=format&fit=crop",
-                "View"
+                "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1000&q=80",
+                null
         ));
 
         viewPager.setAdapter(new PromoAdapter(ads));
@@ -129,84 +174,14 @@ public class HomeActivity extends AppCompatActivity {
         sliderHandler.postDelayed(sliderRunnable, 4000);
     }
 
-    // --- Data Model ---
-    static class AdItem {
-        String title, desc, imageUrl, buttonText;
-
-        AdItem(String title, String desc, String imageUrl, String buttonText) {
-            this.title = title;
-            this.desc = desc;
-            this.imageUrl = imageUrl;
-            this.buttonText = buttonText;
-        }
-    }
-
-    // --- Adapter ---
-    class PromoAdapter extends RecyclerView.Adapter<PromoAdapter.PromoViewHolder> {
-        private final List<AdItem> items;
-
-        PromoAdapter(List<AdItem> items) {
-            this.items = items;
-        }
-
-        @NonNull
-        @Override
-        public PromoViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_banner, parent, false);
-            return new PromoViewHolder(view);
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull PromoViewHolder holder, int position) {
-            AdItem item = items.get(position);
-            holder.textTitle.setText(item.title);
-            holder.textDesc.setText(item.desc);
-            holder.btnAction.setText(item.buttonText);
-
-            // Load Image with Glide
-            Glide.with(holder.itemView.getContext())
-                    .load(item.imageUrl)
-                    .centerCrop()
-                    .into(holder.imgBg);
-
-            holder.btnAction.setOnClickListener(v -> {
-                if ("Claim".equals(item.buttonText)) {
-                    Toast.makeText(getApplicationContext(), "Promo Code Copied!", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(getApplicationContext(), "Opening details for: " + item.title, Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
-
-        @Override
-        public int getItemCount() {
-            return items.size();
-        }
-
-        class PromoViewHolder extends RecyclerView.ViewHolder {
-            TextView textTitle, textDesc;
-            Button btnAction;
-            ImageView imgBg;
-
-            PromoViewHolder(@NonNull View itemView) {
-                super(itemView);
-                textTitle = itemView.findViewById(R.id.tv_banner_title);
-                textDesc = itemView.findViewById(R.id.tv_banner_desc);
-                btnAction = itemView.findViewById(R.id.btn_banner_action);
-                imgBg = itemView.findViewById(R.id.img_banner_bg);
-            }
-        }
-    }
-
-    // --- Existing Helper Methods ---
-
+    // --- Helper Methods ---
     private void setupSearchBar() {
         SearchView searchView = findViewById(R.id.search_view);
         if (searchView != null) {
             searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
                 @Override
                 public boolean onQueryTextSubmit(String query) {
-                    Toast.makeText(getApplicationContext(), "Searching: " + query, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(HomeActivity.this, "Searching: " + query, Toast.LENGTH_SHORT).show();
                     return true;
                 }
                 @Override
@@ -249,5 +224,120 @@ public class HomeActivity extends AppCompatActivity {
             }
             return false;
         });
+    }
+
+    // ===========================
+    //       ADAPTER CLASSES
+    // ===========================
+
+    // 1. Promo Banner Adapter
+    static class AdItem {
+        String title, desc, imageUrl, buttonText;
+        AdItem(String title, String desc, String imageUrl, String buttonText) {
+            this.title = title;
+            this.desc = desc;
+            this.imageUrl = imageUrl;
+            this.buttonText = buttonText;
+        }
+    }
+
+    class PromoAdapter extends RecyclerView.Adapter<PromoAdapter.PromoViewHolder> {
+        private final List<AdItem> items;
+        PromoAdapter(List<AdItem> items) { this.items = items; }
+
+        @NonNull @Override
+        public PromoViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_banner, parent, false);
+            return new PromoViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull PromoViewHolder holder, int position) {
+            AdItem item = items.get(position);
+            holder.textTitle.setText(item.title);
+            holder.textDesc.setText(item.desc);
+
+            // Hide/Show Button Logic
+            if (item.buttonText == null || item.buttonText.isEmpty()) {
+                holder.btnAction.setVisibility(View.GONE);
+            } else {
+                holder.btnAction.setVisibility(View.VISIBLE);
+                holder.btnAction.setText(item.buttonText);
+                holder.btnAction.setOnClickListener(v -> {
+                    if ("Claim".equals(item.buttonText)) {
+                        Toast.makeText(HomeActivity.this, "Promo Code Copied!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(HomeActivity.this, "Details: " + item.title, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
+            Glide.with(holder.itemView.getContext())
+                    .load(item.imageUrl)
+                    .centerCrop()
+                    .into(holder.imgBg);
+        }
+
+        @Override public int getItemCount() { return items.size(); }
+
+        class PromoViewHolder extends RecyclerView.ViewHolder {
+            TextView textTitle, textDesc;
+            Button btnAction;
+            ImageView imgBg;
+            PromoViewHolder(@NonNull View itemView) {
+                super(itemView);
+                textTitle = itemView.findViewById(R.id.tv_banner_title);
+                textDesc = itemView.findViewById(R.id.tv_banner_desc);
+                btnAction = itemView.findViewById(R.id.btn_banner_action);
+                imgBg = itemView.findViewById(R.id.img_banner_bg);
+            }
+        }
+    }
+
+    // 2. Popular Services Adapter
+    static class PopularService {
+        String name;
+        String imageUrl;
+        PopularService(String name, String imageUrl) {
+            this.name = name;
+            this.imageUrl = imageUrl;
+        }
+    }
+
+    class PopularServiceAdapter extends RecyclerView.Adapter<PopularServiceAdapter.ServiceViewHolder> {
+        private final List<PopularService> items;
+        PopularServiceAdapter(List<PopularService> items) { this.items = items; }
+
+        @NonNull @Override
+        public ServiceViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_popular_service, parent, false);
+            return new ServiceViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ServiceViewHolder holder, int position) {
+            PopularService item = items.get(position);
+            holder.tvName.setText(item.name);
+
+            // Load Background Image
+            Glide.with(holder.itemView.getContext())
+                    .load(item.imageUrl)
+                    .centerCrop()
+                    .into(holder.imgBg);
+
+            holder.itemView.setOnClickListener(v -> openBooking(item.name));
+        }
+
+        @Override public int getItemCount() { return items.size(); }
+
+        class ServiceViewHolder extends RecyclerView.ViewHolder {
+            TextView tvName;
+            ImageView imgBg;
+            ServiceViewHolder(@NonNull View itemView) {
+                super(itemView);
+                tvName = itemView.findViewById(R.id.tv_service_name);
+                imgBg = itemView.findViewById(R.id.img_service_bg);
+            }
+        }
     }
 }
