@@ -26,9 +26,9 @@ public class HeaderUtils {
         String fullName = db.getUserName(email);
         String imageUriString = db.getUserImage(email);
 
-        // Greeting Logic
-        String firstName = fullName;
-        if (fullName.contains(" ")) {
+        // FIX: Check if fullName is null or empty before using .contains() to prevent crash
+        String firstName = (fullName != null && !fullName.isEmpty()) ? fullName : "User";
+        if (fullName != null && fullName.contains(" ")) {
             firstName = fullName.split(" ")[0];
         }
 

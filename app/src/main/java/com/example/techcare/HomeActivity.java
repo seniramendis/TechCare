@@ -19,7 +19,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.cardview.widget.CardView;
-import androidx.recyclerview.widget.GridLayoutManager; // Import Grid Layout
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.CompositePageTransformer;
@@ -40,7 +39,9 @@ import java.util.List;
 public class HomeActivity extends AppCompatActivity {
 
     private ViewPager2 viewPager;
+    private ViewPager2 trustViewPager; // NEW: For looping trust cards
     private final Handler sliderHandler = new Handler(Looper.getMainLooper());
+    private final Handler trustHandler = new Handler(Looper.getMainLooper()); // NEW: Handler for trust loop
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,60 +54,68 @@ public class HomeActivity extends AppCompatActivity {
         setupGrid();
         setupPopularServices();
 
-        // 6. Setup Trust Section (GRID UPDATED)
+        // Updated Trust Section (Looping big cards)
         setupTrustSection();
 
         setupBottomNav();
     }
 
-    // --- UPDATED: Trust Section Setup (Now using Grid) ---
     private void setupTrustSection() {
-        RecyclerView recyclerTrust = findViewById(R.id.recycler_trust);
-        // Check if RecyclerView exists in layout to avoid crashes
-        if (recyclerTrust != null) {
-            // CHANGED: Use GridLayoutManager with 2 columns instead of LinearLayoutManager
-            recyclerTrust.setLayoutManager(new GridLayoutManager(this, 2));
-            recyclerTrust.setNestedScrollingEnabled(false); // Prevents scrolling conflicts
-
+        trustViewPager = findViewById(R.id.pager_trust);
+        if (trustViewPager != null) {
             List<TrustItem> trustItems = new ArrayList<>();
-            // Icons used are existing ones from your project
-            trustItems.add(new TrustItem("Expert Techs", "Verified Pros", R.drawable.ic_default_user));
-            trustItems.add(new TrustItem("Fast Service", "Same Day Repair", R.drawable.ic_nav_bookings));
-            trustItems.add(new TrustItem("Warranty", "30 Days Guarantee", R.drawable.ic_home_repair_service));
-            trustItems.add(new TrustItem("Genuine Parts", "100% Original", R.drawable.ic_laptop));
+            // Icons and API tech-related backgrounds
+            trustItems.add(new TrustItem("Expert Technicians", "Certified pros for quality repairs.", R.drawable.ic_default_user, "https://loremflickr.com/800/600/technician,repair?lock=10"));
+            trustItems.add(new TrustItem("Express Service", "Same-day repair for most devices.", R.drawable.ic_nav_bookings, "https://loremflickr.com/800/600/fast,clock?lock=20"));
+            trustItems.add(new TrustItem("Service Warranty", "Enjoy 30 days of peace of mind.", R.drawable.ic_home_repair_service, "https://loremflickr.com/800/600/warranty,shield?lock=30"));
+            trustItems.add(new TrustItem("Genuine Components", "100% original manufacturer parts.", R.drawable.ic_laptop, "https://loremflickr.com/800/600/circuit,hardware?lock=40"));
 
-            recyclerTrust.setAdapter(new TrustAdapter(trustItems));
+            trustViewPager.setAdapter(new TrustAdapter(trustItems));
+
+            // Professional fade transition
+            trustViewPager.setPageTransformer((page, position) -> {
+                page.setAlpha(1 - Math.abs(position));
+            });
+
+            // Start 2-second automatic loop
+            trustHandler.postDelayed(trustRunnable, 2000);
         }
     }
 
+    private final Runnable trustRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (trustViewPager != null && trustViewPager.getAdapter() != null) {
+                int nextItem = (trustViewPager.getCurrentItem() + 1) % trustViewPager.getAdapter().getItemCount();
+                trustViewPager.setCurrentItem(nextItem, true);
+                trustHandler.postDelayed(this, 2000); // Repeat every 2 seconds
+            }
+        }
+    };
+
     private void setupPopularServices() {
         RecyclerView recyclerPopular = findViewById(R.id.recycler_popular);
-        recyclerPopular.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-
-        List<PopularService> services = new ArrayList<>();
-
-        // --- KEEPING YOUR EXISTING LOREM FLICKR LINKS ---
-        services.add(new PopularService("Screen Repair", "https://loremflickr.com/600/400/smartphone,broken?lock=1"));
-        services.add(new PopularService("Battery Fix", "https://loremflickr.com/600/400/phone,battery?lock=2"));
-        services.add(new PopularService("Virus Cleanup", "https://loremflickr.com/600/400/hacker,code?lock=3"));
-        services.add(new PopularService("Data Recovery", "https://loremflickr.com/600/400/server,data?lock=4"));
-        services.add(new PopularService("OS Install", "https://loremflickr.com/600/400/software,computer?lock=5"));
-
-        recyclerPopular.setAdapter(new PopularServiceAdapter(services));
+        if (recyclerPopular != null) {
+            recyclerPopular.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+            List<PopularService> services = new ArrayList<>();
+            services.add(new PopularService("Screen Repair", "https://loremflickr.com/600/400/smartphone,broken?lock=1"));
+            services.add(new PopularService("Battery Fix", "https://loremflickr.com/600/400/phone,battery?lock=2"));
+            services.add(new PopularService("Virus Cleanup", "https://loremflickr.com/600/400/hacker,code?lock=3"));
+            services.add(new PopularService("Data Recovery", "https://loremflickr.com/600/400/server,data?lock=4"));
+            services.add(new PopularService("OS Install", "https://loremflickr.com/600/400/software,computer?lock=5"));
+            recyclerPopular.setAdapter(new PopularServiceAdapter(services));
+        }
     }
 
     private void setupAdSlider() {
         viewPager = findViewById(R.id.pager_promo);
         List<AdItem> ads = new ArrayList<>();
-
-        // --- KEEPING YOUR EXISTING AD LOGIC ---
         ads.add(new AdItem("30% OFF First Repair!", "Use code: TECHNEW30", "https://images.unsplash.com/photo-1588508065123-287b28e013da?auto=format&fit=crop&w=1000&q=80", "Claim"));
         ads.add(new AdItem("Same Day Delivery", "We come to you!", "https://images.unsplash.com/photo-1616401784845-180882ba9ba8?auto=format&fit=crop&w=1000&q=80", null));
         ads.add(new AdItem("Free Diagnostics", "Visit us for a free checkup", "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1000&q=80", null));
 
         viewPager.setAdapter(new PromoAdapter(ads));
         viewPager.setOffscreenPageLimit(3);
-        viewPager.getChildAt(0).setOverScrollMode(RecyclerView.OVER_SCROLL_NEVER);
 
         CompositePageTransformer transformer = new CompositePageTransformer();
         transformer.addTransformer(new MarginPageTransformer(40));
@@ -130,18 +139,26 @@ public class HomeActivity extends AppCompatActivity {
         @Override
         public void run() {
             if (viewPager != null && viewPager.getAdapter() != null) {
-                int currentItem = viewPager.getCurrentItem();
-                int totalItems = viewPager.getAdapter().getItemCount();
-                int nextItem = (currentItem + 1) % totalItems;
+                int nextItem = (viewPager.getCurrentItem() + 1) % viewPager.getAdapter().getItemCount();
                 viewPager.setCurrentItem(nextItem);
             }
         }
     };
 
-    @Override protected void onPause() { super.onPause(); sliderHandler.removeCallbacks(sliderRunnable); }
-    @Override protected void onResume() { super.onResume(); sliderHandler.postDelayed(sliderRunnable, 4000); }
+    @Override
+    protected void onPause() {
+        super.onPause();
+        sliderHandler.removeCallbacks(sliderRunnable);
+        trustHandler.removeCallbacks(trustRunnable);
+    }
 
-    // --- Helpers ---
+    @Override
+    protected void onResume() {
+        super.onResume();
+        sliderHandler.postDelayed(sliderRunnable, 4000);
+        trustHandler.postDelayed(trustRunnable, 2000);
+    }
+
     private void setupSearchBar() {
         SearchView searchView = findViewById(R.id.search_view);
         if (searchView != null) {
@@ -151,6 +168,7 @@ public class HomeActivity extends AppCompatActivity {
             });
         }
     }
+
     private void setupGrid() {
         CardView cardPhone = findViewById(R.id.card_smartphone);
         CardView cardLaptop = findViewById(R.id.card_laptop);
@@ -161,32 +179,34 @@ public class HomeActivity extends AppCompatActivity {
         if (cardAppliance != null) cardAppliance.setOnClickListener(v -> openBooking("Home Appliance"));
         if (cardOther != null) cardOther.setOnClickListener(v -> openBooking("Other Device"));
     }
+
     private void openBooking(String deviceType) {
         Intent intent = new Intent(this, BookingActivity.class);
         intent.putExtra("DEVICE_TYPE", deviceType);
         startActivity(intent);
     }
+
     private void setupBottomNav() {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
-        bottomNav.setSelectedItemId(R.id.nav_home);
-        bottomNav.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.nav_home) return true;
-            if (id == R.id.nav_bookings) { Toast.makeText(this, "My Bookings", Toast.LENGTH_SHORT).show(); return true; }
-            if (id == R.id.nav_profile) { startActivity(new Intent(this, ProfileActivity.class)); return true; }
-            return false;
-        });
+        if (bottomNav != null) {
+            bottomNav.setSelectedItemId(R.id.nav_home);
+            bottomNav.setOnItemSelectedListener(item -> {
+                int id = item.getItemId();
+                if (id == R.id.nav_home) return true;
+                if (id == R.id.nav_bookings) { Toast.makeText(this, "My Bookings", Toast.LENGTH_SHORT).show(); return true; }
+                if (id == R.id.nav_profile) { startActivity(new Intent(this, ProfileActivity.class)); return true; }
+                return false;
+            });
+        }
     }
 
-    // ===========================
-    //       ADAPTER CLASSES
-    // ===========================
-
-    // --- NEW: Trust Adapter and Model ---
+    // --- Trust Section Classes ---
     static class TrustItem {
-        String title, desc;
+        String title, desc, bgUrl;
         int iconRes;
-        TrustItem(String title, String desc, int iconRes) { this.title = title; this.desc = desc; this.iconRes = iconRes; }
+        TrustItem(String title, String desc, int iconRes, String bgUrl) {
+            this.title = title; this.desc = desc; this.iconRes = iconRes; this.bgUrl = bgUrl;
+        }
     }
 
     class TrustAdapter extends RecyclerView.Adapter<TrustAdapter.TrustViewHolder> {
@@ -201,15 +221,17 @@ public class HomeActivity extends AppCompatActivity {
             holder.tvTitle.setText(item.title);
             holder.tvDesc.setText(item.desc);
             holder.imgIcon.setImageResource(item.iconRes);
+            Glide.with(holder.itemView.getContext()).load(item.bgUrl).centerCrop().into(holder.imgBg);
         }
         @Override public int getItemCount() { return items.size(); }
         class TrustViewHolder extends RecyclerView.ViewHolder {
-            TextView tvTitle, tvDesc; ImageView imgIcon;
+            TextView tvTitle, tvDesc; ImageView imgIcon, imgBg;
             TrustViewHolder(@NonNull View itemView) {
                 super(itemView);
                 tvTitle = itemView.findViewById(R.id.tv_trust_title);
                 tvDesc = itemView.findViewById(R.id.tv_trust_desc);
                 imgIcon = itemView.findViewById(R.id.img_trust_icon);
+                imgBg = itemView.findViewById(R.id.img_trust_bg);
             }
         }
     }
@@ -235,19 +257,9 @@ public class HomeActivity extends AppCompatActivity {
             else {
                 holder.btnAction.setVisibility(View.VISIBLE);
                 holder.btnAction.setText(item.buttonText);
-                holder.btnAction.setOnClickListener(v -> {
-                    if ("Claim".equals(item.buttonText)) Toast.makeText(HomeActivity.this, "Promo Code Copied!", Toast.LENGTH_SHORT).show();
-                    else Toast.makeText(HomeActivity.this, "Details: " + item.title, Toast.LENGTH_SHORT).show();
-                });
+                holder.btnAction.setOnClickListener(v -> Toast.makeText(HomeActivity.this, "Details: " + item.title, Toast.LENGTH_SHORT).show());
             }
-
-            Glide.with(holder.itemView.getContext())
-                    .load(item.imageUrl)
-                    .placeholder(R.drawable.ic_launcher_foreground)
-                    .error(R.drawable.ic_launcher_background)
-                    .centerCrop()
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)
-                    .into(holder.imgBg);
+            Glide.with(holder.itemView.getContext()).load(item.imageUrl).centerCrop().diskCacheStrategy(DiskCacheStrategy.ALL).into(holder.imgBg);
         }
         @Override public int getItemCount() { return items.size(); }
         class PromoViewHolder extends RecyclerView.ViewHolder {
@@ -277,27 +289,7 @@ public class HomeActivity extends AppCompatActivity {
         @Override public void onBindViewHolder(@NonNull ServiceViewHolder holder, int position) {
             PopularService item = items.get(position);
             holder.tvName.setText(item.name);
-
-            Glide.with(holder.itemView.getContext())
-                    .load(item.imageUrl)
-                    .placeholder(R.drawable.ic_launcher_foreground)
-                    .error(R.drawable.ic_launcher_background)
-                    .centerCrop()
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)
-                    .listener(new RequestListener<Drawable>() {
-                        @Override
-                        public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                            Log.e("GlideError", "Failed loading service image: " + item.name + " " + (e != null ? e.getMessage() : ""));
-                            return false;
-                        }
-
-                        @Override
-                        public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                            return false;
-                        }
-                    })
-                    .into(holder.imgBg);
-
+            Glide.with(holder.itemView.getContext()).load(item.imageUrl).centerCrop().into(holder.imgBg);
             holder.itemView.setOnClickListener(v -> openBooking(item.name));
         }
         @Override public int getItemCount() { return items.size(); }
