@@ -189,11 +189,13 @@ public class HomeActivity extends AppCompatActivity {
                 int id = item.getItemId();
                 if (id == R.id.nav_home) return true;
                 if (id == R.id.nav_bookings) {
-                    Toast.makeText(this, "My Bookings", Toast.LENGTH_SHORT).show();
+                    startActivity(new Intent(this, MyBookingsActivity.class));
+                    overridePendingTransition(0, 0);
                     return true;
                 }
                 if (id == R.id.nav_profile) {
                     startActivity(new Intent(this, ProfileActivity.class));
+                    overridePendingTransition(0, 0);
                     return true;
                 }
                 return false;

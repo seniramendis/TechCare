@@ -27,14 +27,14 @@
                 android:layout_height="wrap_content"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <androidx.appcompat.widget.SearchView
+            <include
                 android:id="@+id/search_view"
+                layout="@layout/view_search_bar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android.layout_margin="16dp"
-                android:background="@drawable/bg_bottom_nav_curvy"
-                app:queryHint="Search for a service..."
-                app:iconifiedByDefault="false"
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
                 app:layout_constraintTop_toBottomOf="@id/header" />
 
             <androidx.viewpager2.widget.ViewPager2

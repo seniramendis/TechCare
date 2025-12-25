@@ -118,7 +118,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return rows > 0;
     }
 
-    // --- FORGOT PASSWORD METHODS (NEW) ---
+    // --- FORGOT PASSWORD METHODS ---
     public boolean checkEmail(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_USERS + " WHERE " +
@@ -147,5 +147,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cv.put(COL_STATUS, "Received");
         long result = db.insert(TABLE_BOOKINGS, null, cv);
         return result != -1;
+    }
+
+    // --- NEW: FETCH BOOKINGS FOR DASHBOARD ---
+    public Cursor getUserBookings(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        // Order by ID descending (newest first)
+        return db.rawQuery("SELECT * FROM " + TABLE_BOOKINGS +
+                        " WHERE " + COL_USER_EMAIL + " = ? ORDER BY " + COL_BOOKING_ID + " DESC",
+                new String[]{email});
     }
 }
