@@ -1,11 +1,9 @@
 package com.example.techcare;
 
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,7 +13,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.cardview.widget.CardView;
@@ -26,11 +23,7 @@ import androidx.viewpager2.widget.MarginPageTransformer;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.load.engine.GlideException;
-import com.bumptech.glide.request.RequestListener;
-import com.bumptech.glide.request.target.Target;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.ArrayList;
@@ -39,24 +32,22 @@ import java.util.List;
 public class HomeActivity extends AppCompatActivity {
 
     private ViewPager2 viewPager;
-    private ViewPager2 trustViewPager; // NEW: For looping trust cards
+    private ViewPager2 trustViewPager;
     private final Handler sliderHandler = new Handler(Looper.getMainLooper());
-    private final Handler trustHandler = new Handler(Looper.getMainLooper()); // NEW: Handler for trust loop
+    private final Handler trustHandler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
+        // Standard setup
         HeaderUtils.setupHeader(this);
         setupSearchBar();
         setupAdSlider();
         setupGrid();
         setupPopularServices();
-
-        // Updated Trust Section (Looping big cards)
         setupTrustSection();
-
         setupBottomNav();
     }
 
@@ -64,51 +55,33 @@ public class HomeActivity extends AppCompatActivity {
         trustViewPager = findViewById(R.id.pager_trust);
         if (trustViewPager != null) {
             List<TrustItem> trustItems = new ArrayList<>();
-            // Icons and API tech-related backgrounds
             trustItems.add(new TrustItem("Expert Technicians", "Certified pros for quality repairs.", R.drawable.ic_default_user, "https://loremflickr.com/800/600/technician,repair?lock=10"));
             trustItems.add(new TrustItem("Express Service", "Same-day repair for most devices.", R.drawable.ic_nav_bookings, "https://loremflickr.com/800/600/fast,clock?lock=20"));
             trustItems.add(new TrustItem("Service Warranty", "Enjoy 30 days of peace of mind.", R.drawable.ic_home_repair_service, "https://loremflickr.com/800/600/warranty,shield?lock=30"));
             trustItems.add(new TrustItem("Genuine Components", "100% original manufacturer parts.", R.drawable.ic_laptop, "https://loremflickr.com/800/600/circuit,hardware?lock=40"));
 
             trustViewPager.setAdapter(new TrustAdapter(trustItems));
+            trustViewPager.setPageTransformer((page, position) -> page.setAlpha(1 - Math.abs(position)));
 
-            // Professional fade transition
-            trustViewPager.setPageTransformer((page, position) -> {
-                page.setAlpha(1 - Math.abs(position));
-            });
-
-            // Start 2-second automatic loop
-            trustHandler.postDelayed(trustRunnable, 2000);
+            // REMOVED: trustHandler.postDelayed from here to avoid issues during onCreate
         }
     }
 
     private final Runnable trustRunnable = new Runnable() {
         @Override
         public void run() {
-            if (trustViewPager != null && trustViewPager.getAdapter() != null) {
+            if (trustViewPager != null && trustViewPager.getAdapter() != null && trustViewPager.getAdapter().getItemCount() > 0) {
                 int nextItem = (trustViewPager.getCurrentItem() + 1) % trustViewPager.getAdapter().getItemCount();
                 trustViewPager.setCurrentItem(nextItem, true);
-                trustHandler.postDelayed(this, 2000); // Repeat every 2 seconds
+                trustHandler.postDelayed(this, 2000);
             }
         }
     };
 
-    private void setupPopularServices() {
-        RecyclerView recyclerPopular = findViewById(R.id.recycler_popular);
-        if (recyclerPopular != null) {
-            recyclerPopular.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-            List<PopularService> services = new ArrayList<>();
-            services.add(new PopularService("Screen Repair", "https://loremflickr.com/600/400/smartphone,broken?lock=1"));
-            services.add(new PopularService("Battery Fix", "https://loremflickr.com/600/400/phone,battery?lock=2"));
-            services.add(new PopularService("Virus Cleanup", "https://loremflickr.com/600/400/hacker,code?lock=3"));
-            services.add(new PopularService("Data Recovery", "https://loremflickr.com/600/400/server,data?lock=4"));
-            services.add(new PopularService("OS Install", "https://loremflickr.com/600/400/software,computer?lock=5"));
-            recyclerPopular.setAdapter(new PopularServiceAdapter(services));
-        }
-    }
-
     private void setupAdSlider() {
         viewPager = findViewById(R.id.pager_promo);
+        if (viewPager == null) return; // FIX: Added null check to prevent crash
+
         List<AdItem> ads = new ArrayList<>();
         ads.add(new AdItem("30% OFF First Repair!", "Use code: TECHNEW30", "https://images.unsplash.com/photo-1588508065123-287b28e013da?auto=format&fit=crop&w=1000&q=80", "Claim"));
         ads.add(new AdItem("Same Day Delivery", "We come to you!", "https://images.unsplash.com/photo-1616401784845-180882ba9ba8?auto=format&fit=crop&w=1000&q=80", null));
@@ -138,7 +111,7 @@ public class HomeActivity extends AppCompatActivity {
     private final Runnable sliderRunnable = new Runnable() {
         @Override
         public void run() {
-            if (viewPager != null && viewPager.getAdapter() != null) {
+            if (viewPager != null && viewPager.getAdapter() != null && viewPager.getAdapter().getItemCount() > 0) {
                 int nextItem = (viewPager.getCurrentItem() + 1) % viewPager.getAdapter().getItemCount();
                 viewPager.setCurrentItem(nextItem);
             }
@@ -146,24 +119,29 @@ public class HomeActivity extends AppCompatActivity {
     };
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        sliderHandler.removeCallbacks(sliderRunnable);
-        trustHandler.removeCallbacks(trustRunnable);
+    protected void onResume() {
+        super.onResume();
+        // Start auto-scroll loops only when the activity is visible and interactive
+        sliderHandler.postDelayed(sliderRunnable, 4000);
+        trustHandler.postDelayed(trustRunnable, 2000);
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        sliderHandler.postDelayed(sliderRunnable, 4000);
-        trustHandler.postDelayed(trustRunnable, 2000);
+    protected void onPause() {
+        super.onPause();
+        // Prevent memory leaks and background crashes
+        sliderHandler.removeCallbacks(sliderRunnable);
+        trustHandler.removeCallbacks(trustRunnable);
     }
 
     private void setupSearchBar() {
         SearchView searchView = findViewById(R.id.search_view);
         if (searchView != null) {
             searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-                @Override public boolean onQueryTextSubmit(String query) { Toast.makeText(HomeActivity.this, "Searching: " + query, Toast.LENGTH_SHORT).show(); return true; }
+                @Override public boolean onQueryTextSubmit(String query) {
+                    Toast.makeText(HomeActivity.this, "Searching: " + query, Toast.LENGTH_SHORT).show();
+                    return true;
+                }
                 @Override public boolean onQueryTextChange(String newText) { return true; }
             });
         }
@@ -186,6 +164,20 @@ public class HomeActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    private void setupPopularServices() {
+        RecyclerView recyclerPopular = findViewById(R.id.recycler_popular);
+        if (recyclerPopular != null) {
+            recyclerPopular.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+            List<PopularService> services = new ArrayList<>();
+            services.add(new PopularService("Screen Repair", "https://loremflickr.com/600/400/smartphone,broken?lock=1"));
+            services.add(new PopularService("Battery Fix", "https://loremflickr.com/600/400/phone,battery?lock=2"));
+            services.add(new PopularService("Virus Cleanup", "https://loremflickr.com/600/400/hacker,code?lock=3"));
+            services.add(new PopularService("Data Recovery", "https://loremflickr.com/600/400/server,data?lock=4"));
+            services.add(new PopularService("OS Install", "https://loremflickr.com/600/400/software,computer?lock=5"));
+            recyclerPopular.setAdapter(new PopularServiceAdapter(services));
+        }
+    }
+
     private void setupBottomNav() {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
         if (bottomNav != null) {
@@ -193,14 +185,20 @@ public class HomeActivity extends AppCompatActivity {
             bottomNav.setOnItemSelectedListener(item -> {
                 int id = item.getItemId();
                 if (id == R.id.nav_home) return true;
-                if (id == R.id.nav_bookings) { Toast.makeText(this, "My Bookings", Toast.LENGTH_SHORT).show(); return true; }
-                if (id == R.id.nav_profile) { startActivity(new Intent(this, ProfileActivity.class)); return true; }
+                if (id == R.id.nav_bookings) {
+                    Toast.makeText(this, "My Bookings", Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+                if (id == R.id.nav_profile) {
+                    startActivity(new Intent(this, ProfileActivity.class));
+                    return true;
+                }
                 return false;
             });
         }
     }
 
-    // --- Trust Section Classes ---
+    // --- Inner Classes and Adapters ---
     static class TrustItem {
         String title, desc, bgUrl;
         int iconRes;
@@ -236,7 +234,6 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    // --- Existing Adapters ---
     static class AdItem {
         String title, desc, imageUrl, buttonText;
         AdItem(String title, String desc, String imageUrl, String buttonText) { this.title = title; this.desc = desc; this.imageUrl = imageUrl; this.buttonText = buttonText; }

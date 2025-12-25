@@ -21,14 +21,12 @@ public class LoginActivity extends AppCompatActivity {
 
         db = new DatabaseHelper(this);
 
-        // Finding Views
         TextInputEditText etEmail = findViewById(R.id.et_login_email);
         TextInputEditText etPassword = findViewById(R.id.et_login_password);
         Button btnLogin = findViewById(R.id.btn_login);
         TextView signUpText = findViewById(R.id.tv_signup);
         TextView forgotPassText = findViewById(R.id.tv_forgot_pass);
 
-        // Login Button Logic
         btnLogin.setOnClickListener(v -> {
             String email = etEmail.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
@@ -41,23 +39,20 @@ public class LoginActivity extends AppCompatActivity {
                 if (checkCredentials) {
                     Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show();
 
-                    // Save Email for later use (e.g. Booking repairs)
                     SharedPreferences prefs = getSharedPreferences("UserPrefs", MODE_PRIVATE);
                     SharedPreferences.Editor editor = prefs.edit();
                     editor.putString("email", email);
                     editor.apply();
 
-                    // Go to Home Activity
                     Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
                     startActivity(intent);
-                    finish();
+                    finish(); // Standard practice for Login to Home transition
                 } else {
                     Toast.makeText(this, "Invalid Email or Password", Toast.LENGTH_SHORT).show();
                 }
             }
         });
 
-        // Navigation Links
         if (signUpText != null) {
             signUpText.setOnClickListener(v -> {
                 Intent intent = new Intent(LoginActivity.this, SignupActivity.class);
