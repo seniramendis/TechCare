@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,16 +40,22 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // If this line crashes, the issue is definitely in the XML (themes.xml)
         setContentView(R.layout.activity_home);
 
-        // Standard setup
-        HeaderUtils.setupHeader(this);
-        setupSearchBar();
-        setupAdSlider();
-        setupGrid();
-        setupPopularServices();
-        setupTrustSection();
-        setupBottomNav();
+        // Wrap setup methods in try-catch to prevent one failure from crashing the app
+        try {
+            HeaderUtils.setupHeader(this);
+            setupSearchBar();
+            setupAdSlider();
+            setupGrid();
+            setupPopularServices();
+            setupTrustSection();
+            setupBottomNav();
+        } catch (Exception e) {
+            Log.e("HomeActivity", "Error in setup", e);
+            Toast.makeText(this, "Error loading home screen: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 
     private void setupTrustSection() {
@@ -62,8 +69,6 @@ public class HomeActivity extends AppCompatActivity {
 
             trustViewPager.setAdapter(new TrustAdapter(trustItems));
             trustViewPager.setPageTransformer((page, position) -> page.setAlpha(1 - Math.abs(position)));
-
-            // REMOVED: trustHandler.postDelayed from here to avoid issues during onCreate
         }
     }
 
@@ -80,7 +85,7 @@ public class HomeActivity extends AppCompatActivity {
 
     private void setupAdSlider() {
         viewPager = findViewById(R.id.pager_promo);
-        if (viewPager == null) return; // FIX: Added null check to prevent crash
+        if (viewPager == null) return;
 
         List<AdItem> ads = new ArrayList<>();
         ads.add(new AdItem("30% OFF First Repair!", "Use code: TECHNEW30", "https://images.unsplash.com/photo-1588508065123-287b28e013da?auto=format&fit=crop&w=1000&q=80", "Claim"));
@@ -121,7 +126,6 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Start auto-scroll loops only when the activity is visible and interactive
         sliderHandler.postDelayed(sliderRunnable, 4000);
         trustHandler.postDelayed(trustRunnable, 2000);
     }
@@ -129,7 +133,6 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        // Prevent memory leaks and background crashes
         sliderHandler.removeCallbacks(sliderRunnable);
         trustHandler.removeCallbacks(trustRunnable);
     }
