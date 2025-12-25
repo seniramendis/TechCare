@@ -17,6 +17,7 @@ public class HeaderUtils {
         TextView welcomeText = activity.findViewById(R.id.tv_welcome_title);
         ImageView profileIcon = activity.findViewById(R.id.icon_profile);
 
+        // Safety check: stop if views aren't found
         if (welcomeText == null || profileIcon == null) return;
 
         SharedPreferences prefs = activity.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
@@ -26,11 +27,21 @@ public class HeaderUtils {
         String fullName = db.getUserName(email);
         String imageUriString = db.getUserImage(email);
 
-        // FIX: Check if fullName is null or empty before using .contains() to prevent crash
-        String firstName = (fullName != null && !fullName.isEmpty()) ? fullName : "User";
-        if (fullName != null && fullName.contains(" ")) {
-            firstName = fullName.split(" ")[0];
+        // --- NEW CRASH-PROOF CODE STARTS HERE ---
+        String firstName = "User";
+
+        // This block handles empty names, null names, and names that are just spaces
+        if (fullName != null) {
+            String trimmedName = fullName.trim();
+            if (!trimmedName.isEmpty()) {
+                // We use a regex "\\s+" to split by ANY whitespace safely
+                String[] parts = trimmedName.split("\\s+");
+                if (parts.length > 0) {
+                    firstName = parts[0];
+                }
+            }
         }
+        // --- NEW CODE ENDS HERE ---
 
         Calendar c = Calendar.getInstance();
         int timeOfDay = c.get(Calendar.HOUR_OF_DAY);
@@ -38,6 +49,7 @@ public class HeaderUtils {
         if (timeOfDay >= 0 && timeOfDay < 12) greeting = "Good Morning";
         else if (timeOfDay >= 12 && timeOfDay < 16) greeting = "Good Afternoon";
         else greeting = "Good Evening";
+
         welcomeText.setText(greeting + ", " + firstName);
 
         // Image Logic
@@ -59,8 +71,7 @@ public class HeaderUtils {
             popup.setOnMenuItemClickListener(item -> {
                 int id = item.getItemId();
                 if (id == R.id.menu_profile) {
-                    Intent intent = new Intent(activity, ProfileActivity.class);
-                    activity.startActivity(intent);
+                    activity.startActivity(new Intent(activity, ProfileActivity.class));
                     return true;
                 } else if (id == R.id.menu_bookings) {
                     Toast.makeText(activity, "My Bookings", Toast.LENGTH_SHORT).show();
