@@ -30,6 +30,8 @@
         <activity android:name=".ProfileActivity" />
         <activity android:name=".ResetPasswordActivity" />
 
+        <activity android:name=".MyBookingsActivity" android:exported="false" />
+
     </application>
 
 </manifest>
