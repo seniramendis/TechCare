@@ -47,6 +47,87 @@
                 android:clipChildren="false"
                 app:layout_constraintTop_toBottomOf="@id/search_view" />
 
+            <androidx.cardview.widget.CardView
+                android:id="@+id/card_active_repair"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:visibility="visible"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="6dp"
+                app:cardBackgroundColor="@color/brand_surface"
+                app:layout_constraintTop_toBottomOf="@id/pager_promo">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/tv_status_header"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Active Repair"
+                        android:textSize="12sp"
+                        android:textAllCaps="true"
+                        android:textColor="@color/text_secondary"
+                        android:letterSpacing="0.05"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/tv_device_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="iPhone 13 Pro Max"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary"
+                        android:layout_marginTop="2dp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/tv_status_header" />
+
+                    <TextView
+                        android:id="@+id/tv_repair_status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="In Progress"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="#4CAF50"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toTopOf="@id/progress_repair" />
+
+                    <ProgressBar
+                        android:id="@+id/progress_repair"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="0dp"
+                        android:layout_height="8dp"
+                        android:layout_marginTop="12dp"
+                        android:progress="70"
+                        android:progressTint="#4CAF50"
+                        android:progressBackgroundTint="#E0E0E0"
+                        app:layout_constraintTop_toBottomOf="@id/tv_device_name"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent" />
+
+                    <TextView
+                        android:id="@+id/tv_eta"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Est. Completion: 4:00 PM Today"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginTop="8dp"
+                        app:layout_constraintTop_toBottomOf="@id/progress_repair"
+                        app:layout_constraintStart_toStartOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </androidx.cardview.widget.CardView>
+
             <GridLayout
                 android:id="@+id/grid_services"
                 android:layout_width="match_parent"
@@ -54,7 +135,7 @@
                 android:layout_marginTop="16dp"
                 android:columnCount="4"
                 android:padding="8dp"
-                app:layout_constraintTop_toBottomOf="@id/pager_promo">
+                app:layout_constraintTop_toBottomOf="@id/card_active_repair">
 
                 <androidx.cardview.widget.CardView
                     android:id="@+id/card_smartphone"

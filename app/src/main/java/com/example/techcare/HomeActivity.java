@@ -1,6 +1,8 @@
 package com.example.techcare;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -10,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,6 +48,7 @@ public class HomeActivity extends AppCompatActivity {
         try {
             HeaderUtils.setupHeader(this);
             setupSearchBar();
+            setupActiveRepairTracker(); // Initialize the tracker
             setupAdSlider();
             setupGrid();
             setupPopularServices();
@@ -56,24 +60,66 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
+    // Logic for the Active Repair Status Tracker
+    private void setupActiveRepairTracker() {
+        CardView repairCard = findViewById(R.id.card_active_repair);
+        TextView deviceName = findViewById(R.id.tv_device_name);
+        TextView status = findViewById(R.id.tv_repair_status);
+        ProgressBar progressBar = findViewById(R.id.progress_repair);
+
+        if (repairCard != null) {
+            // In a real app, you would fetch this status from your database.
+            // For now, we simulate an active repair.
+            boolean hasActiveRepair = true;
+
+            if (hasActiveRepair) {
+                repairCard.setVisibility(View.VISIBLE);
+                deviceName.setText("iPhone 13 Pro Max");
+
+                // Set text to Green
+                status.setText("Diagnosing (70%)");
+                status.setTextColor(Color.parseColor("#4CAF50"));
+
+                // Set Progress to 70
+                progressBar.setProgress(70);
+
+                // Set Filled part to Green (#4CAF50)
+                progressBar.setProgressTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+                // Set Unfilled background part to Grey (#E0E0E0)
+                progressBar.setProgressBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E0E0E0")));
+
+                repairCard.setOnClickListener(v -> {
+                    Toast.makeText(this, "Opening Repair Details...", Toast.LENGTH_SHORT).show();
+                    // Intent intent = new Intent(this, RepairDetailsActivity.class);
+                    // startActivity(intent);
+                });
+            } else {
+                repairCard.setVisibility(View.GONE);
+            }
+        }
+    }
+
     private void setupTrustSection() {
         trustViewPager = findViewById(R.id.pager_trust);
         if (trustViewPager != null) {
             List<TrustItem> trustItems = new ArrayList<>();
 
+            // Expert Technicians
             trustItems.add(new TrustItem("Expert Technicians", "Certified pros for quality repairs.",
                     R.drawable.ic_default_user,
                     "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=800&q=80"));
 
+            // Express Service
             trustItems.add(new TrustItem("Express Service", "Same-day repair for most devices.",
                     R.drawable.ic_nav_bookings,
                     "https://images.unsplash.com/photo-1524592094714-0f0654e20314?auto=format&fit=crop&w=800&q=80"));
 
-            // CHANGED: Specific 'Signing Contract/Guarantee' image for Service Warranty
+            // Service Warranty - Using the 'Signing/Contract' image
             trustItems.add(new TrustItem("Service Warranty", "Enjoy 30 days of peace of mind.",
                     R.drawable.ic_home_repair_service,
                     "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=800&q=80"));
 
+            // Genuine Components
             trustItems.add(new TrustItem("Genuine Components", "100% original manufacturer parts.",
                     R.drawable.ic_laptop,
                     "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?auto=format&fit=crop&w=800&q=80"));
