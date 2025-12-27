@@ -40,10 +40,8 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // If this line crashes, the issue is definitely in the XML (themes.xml)
         setContentView(R.layout.activity_home);
 
-        // Wrap setup methods in try-catch to prevent one failure from crashing the app
         try {
             HeaderUtils.setupHeader(this);
             setupSearchBar();
@@ -62,10 +60,23 @@ public class HomeActivity extends AppCompatActivity {
         trustViewPager = findViewById(R.id.pager_trust);
         if (trustViewPager != null) {
             List<TrustItem> trustItems = new ArrayList<>();
-            trustItems.add(new TrustItem("Expert Technicians", "Certified pros for quality repairs.", R.drawable.ic_default_user, "https://loremflickr.com/800/600/technician,repair?lock=10"));
-            trustItems.add(new TrustItem("Express Service", "Same-day repair for most devices.", R.drawable.ic_nav_bookings, "https://loremflickr.com/800/600/fast,clock?lock=20"));
-            trustItems.add(new TrustItem("Service Warranty", "Enjoy 30 days of peace of mind.", R.drawable.ic_home_repair_service, "https://loremflickr.com/800/600/warranty,shield?lock=30"));
-            trustItems.add(new TrustItem("Genuine Components", "100% original manufacturer parts.", R.drawable.ic_laptop, "https://loremflickr.com/800/600/circuit,hardware?lock=40"));
+
+            trustItems.add(new TrustItem("Expert Technicians", "Certified pros for quality repairs.",
+                    R.drawable.ic_default_user,
+                    "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=800&q=80"));
+
+            trustItems.add(new TrustItem("Express Service", "Same-day repair for most devices.",
+                    R.drawable.ic_nav_bookings,
+                    "https://images.unsplash.com/photo-1524592094714-0f0654e20314?auto=format&fit=crop&w=800&q=80"));
+
+            // CHANGED: Specific 'Signing Contract/Guarantee' image for Service Warranty
+            trustItems.add(new TrustItem("Service Warranty", "Enjoy 30 days of peace of mind.",
+                    R.drawable.ic_home_repair_service,
+                    "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=800&q=80"));
+
+            trustItems.add(new TrustItem("Genuine Components", "100% original manufacturer parts.",
+                    R.drawable.ic_laptop,
+                    "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?auto=format&fit=crop&w=800&q=80"));
 
             trustViewPager.setAdapter(new TrustAdapter(trustItems));
             trustViewPager.setPageTransformer((page, position) -> page.setAlpha(1 - Math.abs(position)));
