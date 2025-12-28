@@ -103,66 +103,74 @@ public class HomeActivity extends AppCompatActivity {
             return;
         }
 
-        Cursor cursor = null;
         List<RepairItem> repairList = new ArrayList<>();
+        Cursor cursor = null;
 
         try {
+            // 1. READ DATA FIRST
             cursor = dbHelper.getUserBookings(email);
 
             if (cursor != null && cursor.moveToFirst()) {
                 do {
-                    int id = cursor.getInt(cursor.getColumnIndex("booking_id"));
-                    String device = cursor.getString(cursor.getColumnIndex("device_type"));
+                    int idIndex = cursor.getColumnIndex("booking_id");
+                    int deviceIndex = cursor.getColumnIndex("device_type");
 
-                    // --- Day Tracker Logic per Item ---
-                    long startTime = prefs.getLong("booking_start_" + id, 0);
-                    if (startTime == 0) {
-                        startTime = System.currentTimeMillis();
-                        prefs.edit().putLong("booking_start_" + id, startTime).apply();
+                    if (idIndex != -1 && deviceIndex != -1) {
+                        int id = cursor.getInt(idIndex);
+                        String device = cursor.getString(deviceIndex);
+
+                        // --- Day Tracker Logic per Item ---
+                        long startTime = prefs.getLong("booking_start_" + id, 0);
+                        if (startTime == 0) {
+                            startTime = System.currentTimeMillis();
+                            prefs.edit().putLong("booking_start_" + id, startTime).apply();
+                        }
+
+                        long elapsedDays = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - startTime);
+                        String status;
+                        int progress;
+
+                        if (elapsedDays < 1) { status = "Received"; progress = 10; }
+                        else if (elapsedDays < 2) { status = "Diagnosing"; progress = 35; }
+                        else if (elapsedDays < 3) { status = "Repairing"; progress = 65; }
+                        else if (elapsedDays < 4) { status = "Testing"; progress = 85; }
+                        else { status = "Completed"; progress = 100; }
+
+                        // Add to temporary list (Do NOT update DB here)
+                        repairList.add(new RepairItem(device, status, progress, elapsedDays, id));
                     }
-
-                    long elapsedDays = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - startTime);
-                    String status;
-                    int progress;
-
-                    if (elapsedDays < 1) { status = "Received"; progress = 10; }
-                    else if (elapsedDays < 2) { status = "Diagnosing"; progress = 35; }
-                    else if (elapsedDays < 3) { status = "Repairing"; progress = 65; }
-                    else if (elapsedDays < 4) { status = "Testing"; progress = 85; }
-                    else { status = "Completed"; progress = 100; }
-
-                    // Sync DB
-                    dbHelper.updateBookingStatus(id, status);
-
-                    // Add to list
-                    repairList.add(new RepairItem(device, status, progress, elapsedDays));
-
                 } while (cursor.moveToNext());
             }
+        } catch (Exception e) {
+            Log.e("HomeActivity", "Error loading repairs", e);
+        } finally {
+            // 2. CLOSE CURSOR
+            if (cursor != null) cursor.close();
+        }
 
-            if (repairList.isEmpty()) {
-                hideRepairsSection(header, repairsViewPager);
-            } else {
-                showRepairsSection(header, repairsViewPager);
-                RepairAdapter adapter = new RepairAdapter(repairList);
-                repairsViewPager.setAdapter(adapter);
+        // 3. UPDATE DB AND UI SAFELY
+        if (repairList.isEmpty()) {
+            hideRepairsSection(header, repairsViewPager);
+        } else {
+            showRepairsSection(header, repairsViewPager);
 
-                // Add margins and carousel effect
-                repairsViewPager.setOffscreenPageLimit(3);
-                repairsViewPager.setClipToPadding(false);
-                repairsViewPager.setClipChildren(false);
-                repairsViewPager.getChildAt(0).setOverScrollMode(RecyclerView.OVER_SCROLL_NEVER);
-
-                CompositePageTransformer transformer = new CompositePageTransformer();
-                transformer.addTransformer(new MarginPageTransformer(24)); // Spacing between cards
-                repairsViewPager.setPageTransformer(transformer);
+            // Update Database safely now that cursor is closed
+            for (RepairItem item : repairList) {
+                dbHelper.updateBookingStatus(item.id, item.status);
             }
 
-        } catch (Exception e) {
-            Log.e("HomeActivity", "Error active repairs", e);
-            hideRepairsSection(header, repairsViewPager);
-        } finally {
-            if (cursor != null) cursor.close();
+            RepairAdapter adapter = new RepairAdapter(repairList);
+            repairsViewPager.setAdapter(adapter);
+
+            // Add margins and carousel effect
+            repairsViewPager.setOffscreenPageLimit(3);
+            repairsViewPager.setClipToPadding(false);
+            repairsViewPager.setClipChildren(false);
+            repairsViewPager.getChildAt(0).setOverScrollMode(RecyclerView.OVER_SCROLL_NEVER);
+
+            CompositePageTransformer transformer = new CompositePageTransformer();
+            transformer.addTransformer(new MarginPageTransformer(24)); // Spacing between cards
+            repairsViewPager.setPageTransformer(transformer);
         }
     }
 
@@ -181,12 +189,14 @@ public class HomeActivity extends AppCompatActivity {
         String deviceName, status;
         int progress;
         long elapsedDays;
+        int id; // Added ID for DB updates
 
-        RepairItem(String deviceName, String status, int progress, long elapsedDays) {
+        RepairItem(String deviceName, String status, int progress, long elapsedDays, int id) {
             this.deviceName = deviceName;
             this.status = status;
             this.progress = progress;
             this.elapsedDays = elapsedDays;
+            this.id = id;
         }
     }
 

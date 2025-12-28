@@ -9,9 +9,9 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SearchView; // Import for Search logic
+import androidx.appcompat.widget.SearchView;
 
-import com.google.android.material.bottomnavigation.BottomNavigationView; // Import for Bottom Nav
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class BookingActivity extends AppCompatActivity {
 
@@ -89,27 +89,30 @@ public class BookingActivity extends AppCompatActivity {
     private void setupBottomNav() {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
         if (bottomNav != null) {
-            // FIX: Set "Home" as the selected item so it turns GREEN
-            bottomNav.setSelectedItemId(R.id.nav_home);
+            // FIX: Removed the line that forced 'Home' to be selected on start.
+            // Since we are in BookingActivity, we shouldn't highlight Home.
+            // If you have a specific ID for 'New Booking' in your menu, select that instead.
 
             bottomNav.setOnItemSelectedListener(item -> {
                 int id = item.getItemId();
 
                 if (id == R.id.nav_home) {
-                    // Navigate to Home
-                    startActivity(new Intent(this, HomeActivity.class));
+                    // Navigate to Home AND Clear Stack
+                    Intent intent = new Intent(BookingActivity.this, HomeActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    startActivity(intent);
                     finish();
                     return true;
                 }
                 else if (id == R.id.nav_bookings) {
                     // Navigate to My Bookings Dashboard
-                    startActivity(new Intent(this, MyBookingsActivity.class));
+                    startActivity(new Intent(BookingActivity.this, MyBookingsActivity.class));
                     finish();
                     return true;
                 }
                 else if (id == R.id.nav_profile) {
                     // Navigate to Profile
-                    startActivity(new Intent(this, ProfileActivity.class));
+                    startActivity(new Intent(BookingActivity.this, ProfileActivity.class));
                     return true;
                 }
                 return false;
