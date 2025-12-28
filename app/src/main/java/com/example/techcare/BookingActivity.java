@@ -89,10 +89,6 @@ public class BookingActivity extends AppCompatActivity {
     private void setupBottomNav() {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
         if (bottomNav != null) {
-            // FIX: Removed the line that forced 'Home' to be selected on start.
-            // Since we are in BookingActivity, we shouldn't highlight Home.
-            // If you have a specific ID for 'New Booking' in your menu, select that instead.
-
             bottomNav.setOnItemSelectedListener(item -> {
                 int id = item.getItemId();
 
@@ -101,6 +97,12 @@ public class BookingActivity extends AppCompatActivity {
                     Intent intent = new Intent(BookingActivity.this, HomeActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                     startActivity(intent);
+                    finish();
+                    return true;
+                }
+                // NEW: Handle Services Click
+                else if (id == R.id.nav_services) {
+                    startActivity(new Intent(BookingActivity.this, ServicesActivity.class));
                     finish();
                     return true;
                 }

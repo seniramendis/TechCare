@@ -9,6 +9,12 @@
         tools:ignore="HardcodedText" />
 
     <item
+        android:id="@+id/nav_services"
+        android:icon="@drawable/ic_nav_services"
+        android:title="Services"
+        tools:ignore="HardcodedText" />
+
+    <item
         android:id="@+id/nav_bookings"
         android:icon="@drawable/ic_nav_bookings"
         android:title="Bookings"

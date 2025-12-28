@@ -72,18 +72,28 @@ public class MyBookingsActivity extends AppCompatActivity {
         bottomNav.setSelectedItemId(R.id.nav_bookings);
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
+            if (id == R.id.nav_bookings) return true;
+
             if (id == R.id.nav_home) {
                 startActivity(new Intent(this, HomeActivity.class));
                 overridePendingTransition(0, 0);
                 finish();
                 return true;
-            } else if (id == R.id.nav_profile) {
+            }
+            // NEW: Handle Services Click
+            else if (id == R.id.nav_services) {
+                startActivity(new Intent(this, ServicesActivity.class));
+                overridePendingTransition(0, 0);
+                finish();
+                return true;
+            }
+            else if (id == R.id.nav_profile) {
                 startActivity(new Intent(this, ProfileActivity.class));
                 overridePendingTransition(0, 0);
                 finish();
                 return true;
             }
-            return id == R.id.nav_bookings;
+            return false;
         });
     }
 

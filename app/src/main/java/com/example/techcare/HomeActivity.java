@@ -384,6 +384,15 @@ public class HomeActivity extends AppCompatActivity {
             bottomNav.setOnItemSelectedListener(item -> {
                 int id = item.getItemId();
                 if (id == R.id.nav_home) return true;
+
+                // NEW: Handle Services Click
+                if (id == R.id.nav_services) {
+                    startActivity(new Intent(this, ServicesActivity.class));
+                    overridePendingTransition(0, 0);
+                    finish(); // Finish to avoid stacking
+                    return true;
+                }
+
                 if (id == R.id.nav_bookings) {
                     startActivity(new Intent(this, MyBookingsActivity.class));
                     overridePendingTransition(0, 0);
