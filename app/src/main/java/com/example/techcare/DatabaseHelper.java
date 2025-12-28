@@ -118,7 +118,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return rows > 0;
     }
 
-    // --- FORGOT PASSWORD METHODS ---
     public boolean checkEmail(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_USERS + " WHERE " +
@@ -136,7 +135,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return rows > 0;
     }
 
-    // --- BOOKING METHODS ---
     public boolean addBooking(String email, String device, String issue, String type) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -149,12 +147,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return result != -1;
     }
 
-    // --- NEW: FETCH BOOKINGS FOR DASHBOARD ---
     public Cursor getUserBookings(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
         // Order by ID descending (newest first)
         return db.rawQuery("SELECT * FROM " + TABLE_BOOKINGS +
                         " WHERE " + COL_USER_EMAIL + " = ? ORDER BY " + COL_BOOKING_ID + " DESC",
                 new String[]{email});
+    }
+
+    public boolean updateBookingStatus(int bookingId, String newStatus) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(COL_STATUS, newStatus);
+        return db.update(TABLE_BOOKINGS, cv, COL_BOOKING_ID + " = ?", new String[]{String.valueOf(bookingId)}) > 0;
     }
 }

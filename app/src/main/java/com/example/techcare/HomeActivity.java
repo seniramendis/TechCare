@@ -1,7 +1,9 @@
 package com.example.techcare;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -12,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -32,23 +35,31 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class HomeActivity extends AppCompatActivity {
 
     private ViewPager2 viewPager;
     private ViewPager2 trustViewPager;
+    private ViewPager2 repairsViewPager; // Carousel for Active Repairs
+
     private final Handler sliderHandler = new Handler(Looper.getMainLooper());
     private final Handler trustHandler = new Handler(Looper.getMainLooper());
+    private final Handler trackerHandler = new Handler(Looper.getMainLooper());
+
+    private DatabaseHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
+        dbHelper = new DatabaseHelper(this);
+
         try {
             HeaderUtils.setupHeader(this);
             setupSearchBar();
-            setupActiveRepairTracker(); // Initialize the tracker
+            setupActiveRepairsCarousel(); // New Carousel Logic
             setupAdSlider();
             setupGrid();
             setupPopularServices();
@@ -60,66 +71,185 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    // Logic for the Active Repair Status Tracker
-    private void setupActiveRepairTracker() {
-        CardView repairCard = findViewById(R.id.card_active_repair);
-        TextView deviceName = findViewById(R.id.tv_device_name);
-        TextView status = findViewById(R.id.tv_repair_status);
-        ProgressBar progressBar = findViewById(R.id.progress_repair);
+    // --- ACTIVE REPAIRS CAROUSEL START ---
+    private final Runnable trackerRunnable = new Runnable() {
+        @Override
+        public void run() {
+            setupActiveRepairsCarousel();
+            // Refresh every 15 seconds to update day counts if needed
+            trackerHandler.postDelayed(this, 15000);
+        }
+    };
 
-        if (repairCard != null) {
-            // In a real app, you would fetch this status from your database.
-            // For now, we simulate an active repair.
-            boolean hasActiveRepair = true;
+    private void setupActiveRepairsCarousel() {
+        repairsViewPager = findViewById(R.id.pager_active_repairs);
+        TextView viewAll = findViewById(R.id.tv_view_all);
+        LinearLayout header = findViewById(R.id.layout_tracker_header);
 
-            if (hasActiveRepair) {
-                repairCard.setVisibility(View.VISIBLE);
-                deviceName.setText("iPhone 13 Pro Max");
+        if (repairsViewPager == null) return;
 
-                // Set text to Green
-                status.setText("Diagnosing (70%)");
-                status.setTextColor(Color.parseColor("#4CAF50"));
+        // View All Click Event
+        if (viewAll != null) {
+            viewAll.setOnClickListener(v -> {
+                startActivity(new Intent(HomeActivity.this, MyBookingsActivity.class));
+            });
+        }
 
-                // Set Progress to 70
-                progressBar.setProgress(70);
+        SharedPreferences prefs = getSharedPreferences("UserPrefs", MODE_PRIVATE);
+        String email = prefs.getString("email", null);
 
-                // Set Filled part to Green (#4CAF50)
-                progressBar.setProgressTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
-                // Set Unfilled background part to Grey (#E0E0E0)
-                progressBar.setProgressBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E0E0E0")));
+        if (email == null) {
+            hideRepairsSection(header, repairsViewPager);
+            return;
+        }
 
-                repairCard.setOnClickListener(v -> {
-                    Toast.makeText(this, "Opening Repair Details...", Toast.LENGTH_SHORT).show();
-                    // Intent intent = new Intent(this, RepairDetailsActivity.class);
-                    // startActivity(intent);
-                });
+        Cursor cursor = null;
+        List<RepairItem> repairList = new ArrayList<>();
+
+        try {
+            cursor = dbHelper.getUserBookings(email);
+
+            if (cursor != null && cursor.moveToFirst()) {
+                do {
+                    int id = cursor.getInt(cursor.getColumnIndex("booking_id"));
+                    String device = cursor.getString(cursor.getColumnIndex("device_type"));
+
+                    // --- Day Tracker Logic per Item ---
+                    long startTime = prefs.getLong("booking_start_" + id, 0);
+                    if (startTime == 0) {
+                        startTime = System.currentTimeMillis();
+                        prefs.edit().putLong("booking_start_" + id, startTime).apply();
+                    }
+
+                    long elapsedDays = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - startTime);
+                    String status;
+                    int progress;
+
+                    if (elapsedDays < 1) { status = "Received"; progress = 10; }
+                    else if (elapsedDays < 2) { status = "Diagnosing"; progress = 35; }
+                    else if (elapsedDays < 3) { status = "Repairing"; progress = 65; }
+                    else if (elapsedDays < 4) { status = "Testing"; progress = 85; }
+                    else { status = "Completed"; progress = 100; }
+
+                    // Sync DB
+                    dbHelper.updateBookingStatus(id, status);
+
+                    // Add to list
+                    repairList.add(new RepairItem(device, status, progress, elapsedDays));
+
+                } while (cursor.moveToNext());
+            }
+
+            if (repairList.isEmpty()) {
+                hideRepairsSection(header, repairsViewPager);
             } else {
-                repairCard.setVisibility(View.GONE);
+                showRepairsSection(header, repairsViewPager);
+                RepairAdapter adapter = new RepairAdapter(repairList);
+                repairsViewPager.setAdapter(adapter);
+
+                // Add margins and carousel effect
+                repairsViewPager.setOffscreenPageLimit(3);
+                repairsViewPager.setClipToPadding(false);
+                repairsViewPager.setClipChildren(false);
+                repairsViewPager.getChildAt(0).setOverScrollMode(RecyclerView.OVER_SCROLL_NEVER);
+
+                CompositePageTransformer transformer = new CompositePageTransformer();
+                transformer.addTransformer(new MarginPageTransformer(24)); // Spacing between cards
+                repairsViewPager.setPageTransformer(transformer);
+            }
+
+        } catch (Exception e) {
+            Log.e("HomeActivity", "Error active repairs", e);
+            hideRepairsSection(header, repairsViewPager);
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+    }
+
+    private void hideRepairsSection(View header, View pager) {
+        if(header != null) header.setVisibility(View.GONE);
+        if(pager != null) pager.setVisibility(View.GONE);
+    }
+
+    private void showRepairsSection(View header, View pager) {
+        if(header != null) header.setVisibility(View.VISIBLE);
+        if(pager != null) pager.setVisibility(View.VISIBLE);
+    }
+
+    // --- Repair Adapter Classes ---
+    static class RepairItem {
+        String deviceName, status;
+        int progress;
+        long elapsedDays;
+
+        RepairItem(String deviceName, String status, int progress, long elapsedDays) {
+            this.deviceName = deviceName;
+            this.status = status;
+            this.progress = progress;
+            this.elapsedDays = elapsedDays;
+        }
+    }
+
+    class RepairAdapter extends RecyclerView.Adapter<RepairAdapter.RepairViewHolder> {
+        List<RepairItem> list;
+        RepairAdapter(List<RepairItem> list) { this.list = list; }
+
+        @NonNull @Override
+        public RepairViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_home_repair_card, parent, false);
+            return new RepairViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull RepairViewHolder holder, int position) {
+            RepairItem item = list.get(position);
+            holder.deviceName.setText(item.deviceName);
+
+            String displayStatus = item.status;
+            if ("Completed".equals(item.status)) displayStatus = "Ready for Pickup";
+            holder.status.setText(displayStatus + " (" + item.progress + "%)");
+
+            holder.progressBar.setProgress(item.progress);
+            holder.progressBar.setProgressTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+            holder.progressBar.setProgressBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E0E0E0")));
+
+            if (item.progress < 100) {
+                holder.eta.setText("Day " + (item.elapsedDays + 1) + ": In Progress");
+            } else {
+                holder.eta.setText("Service Completed");
+            }
+        }
+
+        @Override
+        public int getItemCount() { return list.size(); }
+
+        class RepairViewHolder extends RecyclerView.ViewHolder {
+            TextView deviceName, status, eta;
+            ProgressBar progressBar;
+            RepairViewHolder(@NonNull View v) {
+                super(v);
+                deviceName = v.findViewById(R.id.tv_device_name);
+                status = v.findViewById(R.id.tv_repair_status);
+                progressBar = v.findViewById(R.id.progress_repair);
+                eta = v.findViewById(R.id.tv_eta);
             }
         }
     }
+    // --- ACTIVE REPAIRS CAROUSEL END ---
 
     private void setupTrustSection() {
         trustViewPager = findViewById(R.id.pager_trust);
         if (trustViewPager != null) {
             List<TrustItem> trustItems = new ArrayList<>();
-
-            // Expert Technicians
             trustItems.add(new TrustItem("Expert Technicians", "Certified pros for quality repairs.",
                     R.drawable.ic_default_user,
                     "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=800&q=80"));
-
-            // Express Service
             trustItems.add(new TrustItem("Express Service", "Same-day repair for most devices.",
                     R.drawable.ic_nav_bookings,
                     "https://images.unsplash.com/photo-1524592094714-0f0654e20314?auto=format&fit=crop&w=800&q=80"));
-
-            // Service Warranty - Using the 'Signing/Contract' image
             trustItems.add(new TrustItem("Service Warranty", "Enjoy 30 days of peace of mind.",
                     R.drawable.ic_home_repair_service,
                     "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=800&q=80"));
-
-            // Genuine Components
             trustItems.add(new TrustItem("Genuine Components", "100% original manufacturer parts.",
                     R.drawable.ic_laptop,
                     "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?auto=format&fit=crop&w=800&q=80"));
@@ -143,7 +273,6 @@ public class HomeActivity extends AppCompatActivity {
     private void setupAdSlider() {
         viewPager = findViewById(R.id.pager_promo);
         if (viewPager == null) return;
-
         List<AdItem> ads = new ArrayList<>();
         ads.add(new AdItem("30% OFF First Repair!", "Use code: TECHNEW30", "https://images.unsplash.com/photo-1588508065123-287b28e013da?auto=format&fit=crop&w=1000&q=80", "Claim"));
         ads.add(new AdItem("Same Day Delivery", "We come to you!", "https://images.unsplash.com/photo-1616401784845-180882ba9ba8?auto=format&fit=crop&w=1000&q=80", null));
@@ -151,7 +280,6 @@ public class HomeActivity extends AppCompatActivity {
 
         viewPager.setAdapter(new PromoAdapter(ads));
         viewPager.setOffscreenPageLimit(3);
-
         CompositePageTransformer transformer = new CompositePageTransformer();
         transformer.addTransformer(new MarginPageTransformer(40));
         transformer.addTransformer((page, position) -> {
@@ -159,7 +287,6 @@ public class HomeActivity extends AppCompatActivity {
             page.setScaleY(0.85f + r * 0.15f);
         });
         viewPager.setPageTransformer(transformer);
-
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
@@ -185,6 +312,7 @@ public class HomeActivity extends AppCompatActivity {
         super.onResume();
         sliderHandler.postDelayed(sliderRunnable, 4000);
         trustHandler.postDelayed(trustRunnable, 2000);
+        trackerHandler.post(trackerRunnable);
     }
 
     @Override
@@ -192,6 +320,7 @@ public class HomeActivity extends AppCompatActivity {
         super.onPause();
         sliderHandler.removeCallbacks(sliderRunnable);
         trustHandler.removeCallbacks(trustRunnable);
+        trackerHandler.removeCallbacks(trackerRunnable);
     }
 
     private void setupSearchBar() {
@@ -260,7 +389,6 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    // --- Inner Classes and Adapters ---
     static class TrustItem {
         String title, desc, bgUrl;
         int iconRes;
