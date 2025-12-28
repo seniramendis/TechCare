@@ -41,7 +41,7 @@ public class HomeActivity extends AppCompatActivity {
 
     private ViewPager2 viewPager;
     private ViewPager2 trustViewPager;
-    private ViewPager2 repairsViewPager; // Carousel for Active Repairs
+    private ViewPager2 repairsViewPager;
 
     private final Handler sliderHandler = new Handler(Looper.getMainLooper());
     private final Handler trustHandler = new Handler(Looper.getMainLooper());
@@ -59,10 +59,11 @@ public class HomeActivity extends AppCompatActivity {
         try {
             HeaderUtils.setupHeader(this);
             setupSearchBar();
-            setupActiveRepairsCarousel(); // New Carousel Logic
+            setupActiveRepairsCarousel();
             setupAdSlider();
             setupGrid();
             setupPopularServices();
+            setupTestimonials();
             setupTrustSection();
             setupBottomNav();
         } catch (Exception e) {
@@ -71,12 +72,114 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    // --- ACTIVE REPAIRS CAROUSEL START ---
+    // --- TESTIMONIALS LOGIC START ---
+    public static class TestimonialItem {
+        public String review, author, imageUrl;
+        public int rating;
+
+        public TestimonialItem(String review, String author, int rating, String imageUrl) {
+            this.review = review;
+            this.author = author;
+            this.rating = rating;
+            this.imageUrl = imageUrl;
+        }
+    }
+
+    private void setupTestimonials() {
+        RecyclerView recyclerReviews = findViewById(R.id.recycler_testimonials);
+        TextView btnViewAll = findViewById(R.id.tv_reviews_view_all);
+
+        if (btnViewAll != null) {
+            btnViewAll.setOnClickListener(v -> {
+                startActivity(new Intent(HomeActivity.this, TestimonialsActivity.class));
+            });
+        }
+
+        if (recyclerReviews != null) {
+            recyclerReviews.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+
+            List<TestimonialItem> reviews = new ArrayList<>();
+
+            // Item 1: HAS A PICTURE (Simulated)
+            reviews.add(new TestimonialItem("Fixed my MacBook screen in just 2 hours! Saved my work week.", "Kavindi Perera", 5, "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80"));
+
+            // Item 2: NO PICTURE (pass null) -> Should show Default Drawable
+            reviews.add(new TestimonialItem("Good service but the parking was a bit difficult.", "Nuwan Pradeep", 4, null));
+
+            // Item 3: HAS A PICTURE
+            reviews.add(new TestimonialItem("Best price in town for battery replacement. Highly recommended!", "Dilani Silva", 5, "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&q=80"));
+
+            // Item 4: NO PICTURE (pass null) -> Should show Default Drawable
+            reviews.add(new TestimonialItem("Fast and friendly, but they didn't have the case I wanted.", "Kasun Rajapakshe", 4, null));
+
+            recyclerReviews.setAdapter(new TestimonialAdapter(reviews));
+        }
+    }
+
+    class TestimonialAdapter extends RecyclerView.Adapter<TestimonialAdapter.ReviewViewHolder> {
+        private final List<TestimonialItem> items;
+        TestimonialAdapter(List<TestimonialItem> items) { this.items = items; }
+
+        @NonNull @Override
+        public ReviewViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_testimonial, parent, false);
+            return new ReviewViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ReviewViewHolder holder, int position) {
+            TestimonialItem item = items.get(position);
+            holder.tvReview.setText("\"" + item.review + "\"");
+            holder.tvAuthor.setText(item.author);
+
+            StringBuilder stars = new StringBuilder();
+            for(int i = 0; i < item.rating; i++) stars.append("⭐");
+            holder.tvStars.setText(stars.toString());
+
+            // --- STRICT IMAGE LOGIC ---
+            if (item.imageUrl != null && !item.imageUrl.isEmpty()) {
+                // CASE 1: User HAS a picture
+                holder.imgAvatar.clearColorFilter(); // Remove any tint
+                holder.imgAvatar.setPadding(0,0,0,0);
+                Glide.with(holder.itemView.getContext())
+                        .load(item.imageUrl)
+                        .circleCrop()
+                        .into(holder.imgAvatar);
+            } else {
+                // CASE 2: User DOES NOT have a picture
+                holder.imgAvatar.clearColorFilter(); // Remove any tint (shows original drawable colors)
+                holder.imgAvatar.setPadding(0,0,0,0);
+                holder.imgAvatar.setImageResource(R.drawable.ic_default_user);
+            }
+        }
+
+        @Override public int getItemCount() { return items.size(); }
+
+        class ReviewViewHolder extends RecyclerView.ViewHolder {
+            TextView tvReview, tvAuthor, tvStars;
+            ImageView imgAvatar;
+
+            ReviewViewHolder(@NonNull View itemView) {
+                super(itemView);
+                tvReview = itemView.findViewById(R.id.tv_review_text);
+                tvAuthor = itemView.findViewById(R.id.tv_review_author);
+                tvStars = itemView.findViewById(R.id.tv_star_rating);
+                imgAvatar = itemView.findViewById(R.id.img_avatar);
+            }
+        }
+    }
+    // --- TESTIMONIALS LOGIC END ---
+
+    // ... (Keep existing methods: setupActiveRepairsCarousel, setupTrustSection, setupAdSlider, setupSearchBar, etc.) ...
+
+    // --- COPY PASTE THE REST OF THE EXISTING METHODS HERE (setupActiveRepairsCarousel, etc.) ---
+    // For brevity in the response, assume the rest of the file logic is preserved as previously provided.
+    // Ensure you keep setupActiveRepairsCarousel, setupTrustSection, setupAdSlider, setupGrid, openBooking, setupPopularServices, setupBottomNav, and their inner classes.
+
     private final Runnable trackerRunnable = new Runnable() {
         @Override
         public void run() {
             setupActiveRepairsCarousel();
-            // Refresh every 15 seconds to update day counts if needed
             trackerHandler.postDelayed(this, 15000);
         }
     };
@@ -87,12 +190,8 @@ public class HomeActivity extends AppCompatActivity {
         LinearLayout header = findViewById(R.id.layout_tracker_header);
 
         if (repairsViewPager == null) return;
-
-        // View All Click Event
         if (viewAll != null) {
-            viewAll.setOnClickListener(v -> {
-                startActivity(new Intent(HomeActivity.this, MyBookingsActivity.class));
-            });
+            viewAll.setOnClickListener(v -> startActivity(new Intent(HomeActivity.this, MyBookingsActivity.class)));
         }
 
         SharedPreferences prefs = getSharedPreferences("UserPrefs", MODE_PRIVATE);
@@ -107,9 +206,7 @@ public class HomeActivity extends AppCompatActivity {
         Cursor cursor = null;
 
         try {
-            // 1. READ DATA FIRST
             cursor = dbHelper.getUserBookings(email);
-
             if (cursor != null && cursor.moveToFirst()) {
                 do {
                     int idIndex = cursor.getColumnIndex("booking_id");
@@ -118,25 +215,19 @@ public class HomeActivity extends AppCompatActivity {
                     if (idIndex != -1 && deviceIndex != -1) {
                         int id = cursor.getInt(idIndex);
                         String device = cursor.getString(deviceIndex);
-
-                        // --- Day Tracker Logic per Item ---
                         long startTime = prefs.getLong("booking_start_" + id, 0);
                         if (startTime == 0) {
                             startTime = System.currentTimeMillis();
                             prefs.edit().putLong("booking_start_" + id, startTime).apply();
                         }
-
                         long elapsedDays = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - startTime);
                         String status;
                         int progress;
-
                         if (elapsedDays < 1) { status = "Received"; progress = 10; }
                         else if (elapsedDays < 2) { status = "Diagnosing"; progress = 35; }
                         else if (elapsedDays < 3) { status = "Repairing"; progress = 65; }
                         else if (elapsedDays < 4) { status = "Testing"; progress = 85; }
                         else { status = "Completed"; progress = 100; }
-
-                        // Add to temporary list (Do NOT update DB here)
                         repairList.add(new RepairItem(device, status, progress, elapsedDays, id));
                     }
                 } while (cursor.moveToNext());
@@ -144,32 +235,24 @@ public class HomeActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.e("HomeActivity", "Error loading repairs", e);
         } finally {
-            // 2. CLOSE CURSOR
             if (cursor != null) cursor.close();
         }
 
-        // 3. UPDATE DB AND UI SAFELY
         if (repairList.isEmpty()) {
             hideRepairsSection(header, repairsViewPager);
         } else {
             showRepairsSection(header, repairsViewPager);
-
-            // Update Database safely now that cursor is closed
             for (RepairItem item : repairList) {
                 dbHelper.updateBookingStatus(item.id, item.status);
             }
-
             RepairAdapter adapter = new RepairAdapter(repairList);
             repairsViewPager.setAdapter(adapter);
-
-            // Add margins and carousel effect
             repairsViewPager.setOffscreenPageLimit(3);
             repairsViewPager.setClipToPadding(false);
             repairsViewPager.setClipChildren(false);
             repairsViewPager.getChildAt(0).setOverScrollMode(RecyclerView.OVER_SCROLL_NEVER);
-
             CompositePageTransformer transformer = new CompositePageTransformer();
-            transformer.addTransformer(new MarginPageTransformer(24)); // Spacing between cards
+            transformer.addTransformer(new MarginPageTransformer(24));
             repairsViewPager.setPageTransformer(transformer);
         }
     }
@@ -184,13 +267,11 @@ public class HomeActivity extends AppCompatActivity {
         if(pager != null) pager.setVisibility(View.VISIBLE);
     }
 
-    // --- Repair Adapter Classes ---
     static class RepairItem {
         String deviceName, status;
         int progress;
         long elapsedDays;
-        int id; // Added ID for DB updates
-
+        int id;
         RepairItem(String deviceName, String status, int progress, long elapsedDays, int id) {
             this.deviceName = deviceName;
             this.status = status;
@@ -203,36 +284,28 @@ public class HomeActivity extends AppCompatActivity {
     class RepairAdapter extends RecyclerView.Adapter<RepairAdapter.RepairViewHolder> {
         List<RepairItem> list;
         RepairAdapter(List<RepairItem> list) { this.list = list; }
-
         @NonNull @Override
         public RepairViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_home_repair_card, parent, false);
             return new RepairViewHolder(view);
         }
-
         @Override
         public void onBindViewHolder(@NonNull RepairViewHolder holder, int position) {
             RepairItem item = list.get(position);
             holder.deviceName.setText(item.deviceName);
-
             String displayStatus = item.status;
             if ("Completed".equals(item.status)) displayStatus = "Ready for Pickup";
             holder.status.setText(displayStatus + " (" + item.progress + "%)");
-
             holder.progressBar.setProgress(item.progress);
             holder.progressBar.setProgressTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
             holder.progressBar.setProgressBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E0E0E0")));
-
             if (item.progress < 100) {
                 holder.eta.setText("Day " + (item.elapsedDays + 1) + ": In Progress");
             } else {
                 holder.eta.setText("Service Completed");
             }
         }
-
-        @Override
-        public int getItemCount() { return list.size(); }
-
+        @Override public int getItemCount() { return list.size(); }
         class RepairViewHolder extends RecyclerView.ViewHolder {
             TextView deviceName, status, eta;
             ProgressBar progressBar;
@@ -245,25 +318,15 @@ public class HomeActivity extends AppCompatActivity {
             }
         }
     }
-    // --- ACTIVE REPAIRS CAROUSEL END ---
 
     private void setupTrustSection() {
         trustViewPager = findViewById(R.id.pager_trust);
         if (trustViewPager != null) {
             List<TrustItem> trustItems = new ArrayList<>();
-            trustItems.add(new TrustItem("Expert Technicians", "Certified pros for quality repairs.",
-                    R.drawable.ic_default_user,
-                    "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=800&q=80"));
-            trustItems.add(new TrustItem("Express Service", "Same-day repair for most devices.",
-                    R.drawable.ic_nav_bookings,
-                    "https://images.unsplash.com/photo-1524592094714-0f0654e20314?auto=format&fit=crop&w=800&q=80"));
-            trustItems.add(new TrustItem("Service Warranty", "Enjoy 30 days of peace of mind.",
-                    R.drawable.ic_home_repair_service,
-                    "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=800&q=80"));
-            trustItems.add(new TrustItem("Genuine Components", "100% original manufacturer parts.",
-                    R.drawable.ic_laptop,
-                    "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?auto=format&fit=crop&w=800&q=80"));
-
+            trustItems.add(new TrustItem("Expert Technicians", "Certified pros for quality repairs.", R.drawable.ic_default_user, "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=800&q=80"));
+            trustItems.add(new TrustItem("Express Service", "Same-day repair for most devices.", R.drawable.ic_nav_bookings, "https://images.unsplash.com/photo-1524592094714-0f0654e20314?auto=format&fit=crop&w=800&q=80"));
+            trustItems.add(new TrustItem("Service Warranty", "Enjoy 30 days of peace of mind.", R.drawable.ic_home_repair_service, "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=800&q=80"));
+            trustItems.add(new TrustItem("Genuine Components", "100% original manufacturer parts.", R.drawable.ic_laptop, "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?auto=format&fit=crop&w=800&q=80"));
             trustViewPager.setAdapter(new TrustAdapter(trustItems));
             trustViewPager.setPageTransformer((page, position) -> page.setAlpha(1 - Math.abs(position)));
         }
@@ -287,7 +350,6 @@ public class HomeActivity extends AppCompatActivity {
         ads.add(new AdItem("30% OFF First Repair!", "Use code: TECHNEW30", "https://images.unsplash.com/photo-1588508065123-287b28e013da?auto=format&fit=crop&w=1000&q=80", "Claim"));
         ads.add(new AdItem("Same Day Delivery", "We come to you!", "https://images.unsplash.com/photo-1616401784845-180882ba9ba8?auto=format&fit=crop&w=1000&q=80", null));
         ads.add(new AdItem("Free Diagnostics", "Visit us for a free checkup", "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1000&q=80", null));
-
         viewPager.setAdapter(new PromoAdapter(ads));
         viewPager.setOffscreenPageLimit(3);
         CompositePageTransformer transformer = new CompositePageTransformer();
@@ -384,15 +446,12 @@ public class HomeActivity extends AppCompatActivity {
             bottomNav.setOnItemSelectedListener(item -> {
                 int id = item.getItemId();
                 if (id == R.id.nav_home) return true;
-
-                // NEW: Handle Services Click
                 if (id == R.id.nav_services) {
                     startActivity(new Intent(this, ServicesActivity.class));
                     overridePendingTransition(0, 0);
-                    finish(); // Finish to avoid stacking
+                    finish();
                     return true;
                 }
-
                 if (id == R.id.nav_bookings) {
                     startActivity(new Intent(this, MyBookingsActivity.class));
                     overridePendingTransition(0, 0);

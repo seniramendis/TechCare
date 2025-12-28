@@ -215,7 +215,6 @@
                             android:layout_marginTop="4dp"/>
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
-
             </GridLayout>
 
             <TextView
@@ -243,6 +242,49 @@
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 app:layout_constraintTop_toBottomOf="@id/tv_popular_label" />
 
+            <LinearLayout
+                android:id="@+id/layout_testimonials_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="24dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                app:layout_constraintTop_toBottomOf="@id/recycler_popular">
+
+                <TextView
+                    android:id="@+id/tv_testimonials_label"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Customer Stories"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_reviews_view_all"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="View All"
+                    android:textColor="@color/brand_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:padding="8dp"/>
+            </LinearLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_testimonials"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:clipToPadding="false"
+                android:orientation="horizontal"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                app:layout_constraintTop_toBottomOf="@id/layout_testimonials_header" />
             <TextView
                 android:id="@+id/tv_trust_label"
                 android:layout_width="wrap_content"
@@ -253,7 +295,7 @@
                 android:textStyle="bold"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="24dp"
-                app:layout_constraintTop_toBottomOf="@id/recycler_popular"
+                app:layout_constraintTop_toBottomOf="@id/recycler_testimonials"
                 app:layout_constraintStart_toStartOf="parent" />
 
             <androidx.viewpager2.widget.ViewPager2

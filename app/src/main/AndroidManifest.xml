@@ -26,11 +26,16 @@
         <activity android:name=".SignupActivity" />
         <activity android:name=".ForgotPasswordActivity" />
         <activity android:name=".HomeActivity" android:exported="false" />
-        <activity android:name=".ServicesActivity" android:exported="false" /> <activity android:name=".BookingActivity" android:exported="false" />
+        <activity android:name=".ServicesActivity" android:exported="false" />
+        <activity android:name=".BookingActivity" android:exported="false" />
         <activity android:name=".ProfileActivity" />
         <activity android:name=".ResetPasswordActivity" />
-
         <activity android:name=".MyBookingsActivity" android:exported="false" />
+
+        <activity
+            android:name=".TestimonialsActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
 
     </application>
 
