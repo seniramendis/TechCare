@@ -54,7 +54,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="12dp"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 android:visibility="gone"
@@ -84,11 +84,10 @@
             <androidx.viewpager2.widget.ViewPager2
                 android:id="@+id/pager_active_repairs"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_height="130dp"
+                android:layout_marginTop="0dp"
                 android:clipToPadding="false"
                 android:clipChildren="false"
-                android:minHeight="140dp"
                 android:visibility="gone"
                 app:layout_constraintTop_toBottomOf="@id/layout_tracker_header" />
 
@@ -96,7 +95,7 @@
                 android:id="@+id/grid_services"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="8dp"
                 android:columnCount="4"
                 android:padding="8dp"
                 app:layout_constraintTop_toBottomOf="@id/pager_active_repairs">
