@@ -1,3 +1,4 @@
+// File: app/src/main/java/com/example/techcare/TestimonialsActivity.java
 package com.example.techcare;
 
 import android.content.Intent;
@@ -14,10 +15,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import java.util.ArrayList;
 import java.util.List;
 
 public class TestimonialsActivity extends AppCompatActivity {
+
+    private DatabaseHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,45 +27,23 @@ public class TestimonialsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_testimonials);
         HeaderUtils.setupHeader(this);
 
+        dbHelper = new DatabaseHelper(this);
         setupBottomNav();
 
         RecyclerView recyclerView = findViewById(R.id.recycler_all_reviews);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        List<HomeActivity.TestimonialItem> allReviews = new ArrayList<>();
+        // FETCH FROM DB
+        List<Review> allReviews = dbHelper.getAllReviews();
 
-        // Item 1: Simulated URL (Has Picture)
-        allReviews.add(new HomeActivity.TestimonialItem("Fixed my MacBook screen in just 2 hours! Saved my work week.", "Kavindi Perera", 5, "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80"));
-
-        // Item 2: Null (Default Drawable)
-        allReviews.add(new HomeActivity.TestimonialItem("Good service but the parking was a bit difficult.", "Nuwan Pradeep", 4, null));
-
-        // Item 3: Simulated URL (Has Picture)
-        allReviews.add(new HomeActivity.TestimonialItem("Best price in town for battery replacement. Highly recommended!", "Dilani Silva", 5, "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&q=80"));
-
-        // Item 4: Null (Default Drawable)
-        allReviews.add(new HomeActivity.TestimonialItem("Fast, friendly, and honest. My go-to tech repair shop now.", "Kasun Rajapakshe", 4, null));
-
-        // Item 5: Simulated URL (Has Picture)
-        allReviews.add(new HomeActivity.TestimonialItem("Excellent service! They even cleaned my laptop fans for free.", "Chathura De Silva", 5, "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80"));
-
-        // Item 6: Null (Default Drawable)
-        allReviews.add(new HomeActivity.TestimonialItem("Genuine parts, but took a day longer than promised.", "Tharindu Bandara", 4, null));
-
-        // Item 7: Simulated URL (Has Picture)
-        allReviews.add(new HomeActivity.TestimonialItem("Great customer support. They explained everything clearly.", "Ishani Weerasinghe", 5, "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80"));
-
-        // Item 8: Simulated URL (Has Picture)
-        allReviews.add(new HomeActivity.TestimonialItem("Highly recommended for urgent repairs. Super fast!", "Malith Kumara", 5, "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80"));
-
+        // Pass the list to the adapter
         recyclerView.setAdapter(new AllReviewsAdapter(allReviews));
     }
 
     private void setupBottomNav() {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
         if (bottomNav != null) {
-            bottomNav.setSelectedItemId(R.id.nav_services);
-
+            bottomNav.setSelectedItemId(R.id.nav_services); // Highlight Services as parent
             bottomNav.setOnItemSelectedListener(item -> {
                 int id = item.getItemId();
                 if (id == R.id.nav_services) {
@@ -88,21 +68,18 @@ public class TestimonialsActivity extends AppCompatActivity {
     }
 
     class AllReviewsAdapter extends RecyclerView.Adapter<AllReviewsAdapter.ReviewViewHolder> {
-        private final List<HomeActivity.TestimonialItem> items;
-        AllReviewsAdapter(List<HomeActivity.TestimonialItem> items) { this.items = items; }
+        private final List<Review> items;
+        AllReviewsAdapter(List<Review> items) { this.items = items; }
 
         @NonNull @Override
         public ReviewViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_testimonial, parent, false);
-            ViewGroup.LayoutParams lp = view.getLayoutParams();
-            lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
-            view.setLayoutParams(lp);
             return new ReviewViewHolder(view);
         }
 
         @Override
         public void onBindViewHolder(@NonNull ReviewViewHolder holder, int position) {
-            HomeActivity.TestimonialItem item = items.get(position);
+            Review item = items.get(position);
             holder.tvReview.setText("\"" + item.review + "\"");
             holder.tvAuthor.setText(item.author);
 
@@ -110,18 +87,15 @@ public class TestimonialsActivity extends AppCompatActivity {
             for(int i = 0; i < item.rating; i++) stars.append("⭐");
             holder.tvStars.setText(stars.toString());
 
-            // --- STRICT IMAGE LOGIC ---
             if (item.imageUrl != null && !item.imageUrl.isEmpty()) {
-                // HAS PICTURE
-                holder.imgAvatar.clearColorFilter(); // No tint
+                holder.imgAvatar.clearColorFilter();
                 holder.imgAvatar.setPadding(0,0,0,0);
                 Glide.with(holder.itemView.getContext())
                         .load(item.imageUrl)
                         .circleCrop()
                         .into(holder.imgAvatar);
             } else {
-                // DEFAULT DRAWABLE (NO API IMAGE)
-                holder.imgAvatar.clearColorFilter(); // Remove tint so drawable colors show
+                holder.imgAvatar.clearColorFilter();
                 holder.imgAvatar.setPadding(0,0,0,0);
                 holder.imgAvatar.setImageResource(R.drawable.ic_default_user);
             }

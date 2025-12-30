@@ -1,3 +1,4 @@
+// File: app/src/main/java/com/example/techcare/HomeActivity.java
 package com.example.techcare;
 
 import android.content.Intent;
@@ -63,25 +64,12 @@ public class HomeActivity extends AppCompatActivity {
             setupAdSlider();
             setupGrid();
             setupPopularServices();
-            setupTestimonials();
+            setupTestimonials(); // Now fetches from DB
             setupTrustSection();
             setupBottomNav();
         } catch (Exception e) {
             Log.e("HomeActivity", "Error in setup", e);
             Toast.makeText(this, "Error loading home screen: " + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
-    }
-
-    // --- TESTIMONIALS LOGIC START ---
-    public static class TestimonialItem {
-        public String review, author, imageUrl;
-        public int rating;
-
-        public TestimonialItem(String review, String author, int rating, String imageUrl) {
-            this.review = review;
-            this.author = author;
-            this.rating = rating;
-            this.imageUrl = imageUrl;
         }
     }
 
@@ -98,27 +86,22 @@ public class HomeActivity extends AppCompatActivity {
         if (recyclerReviews != null) {
             recyclerReviews.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
 
-            List<TestimonialItem> reviews = new ArrayList<>();
+            // FETCH REVIEWS FROM DB
+            List<Review> reviews = dbHelper.getAllReviews();
 
-            // Item 1: HAS A PICTURE (Simulated)
-            reviews.add(new TestimonialItem("Fixed my MacBook screen in just 2 hours! Saved my work week.", "Kavindi Perera", 5, "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80"));
-
-            // Item 2: NO PICTURE (pass null) -> Should show Default Drawable
-            reviews.add(new TestimonialItem("Good service but the parking was a bit difficult.", "Nuwan Pradeep", 4, null));
-
-            // Item 3: HAS A PICTURE
-            reviews.add(new TestimonialItem("Best price in town for battery replacement. Highly recommended!", "Dilani Silva", 5, "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&q=80"));
-
-            // Item 4: NO PICTURE (pass null) -> Should show Default Drawable
-            reviews.add(new TestimonialItem("Fast and friendly, but they didn't have the case I wanted.", "Kasun Rajapakshe", 4, null));
+            // Optional: Limit Home Page to top 5 reviews if list is huge
+            if (reviews.size() > 5) {
+                reviews = reviews.subList(0, 5);
+            }
 
             recyclerReviews.setAdapter(new TestimonialAdapter(reviews));
         }
     }
 
     class TestimonialAdapter extends RecyclerView.Adapter<TestimonialAdapter.ReviewViewHolder> {
-        private final List<TestimonialItem> items;
-        TestimonialAdapter(List<TestimonialItem> items) { this.items = items; }
+        // Use the new Review class
+        private final List<Review> items;
+        TestimonialAdapter(List<Review> items) { this.items = items; }
 
         @NonNull @Override
         public ReviewViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -128,7 +111,7 @@ public class HomeActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(@NonNull ReviewViewHolder holder, int position) {
-            TestimonialItem item = items.get(position);
+            Review item = items.get(position);
             holder.tvReview.setText("\"" + item.review + "\"");
             holder.tvAuthor.setText(item.author);
 
@@ -136,18 +119,15 @@ public class HomeActivity extends AppCompatActivity {
             for(int i = 0; i < item.rating; i++) stars.append("⭐");
             holder.tvStars.setText(stars.toString());
 
-            // --- STRICT IMAGE LOGIC ---
             if (item.imageUrl != null && !item.imageUrl.isEmpty()) {
-                // CASE 1: User HAS a picture
-                holder.imgAvatar.clearColorFilter(); // Remove any tint
+                holder.imgAvatar.clearColorFilter();
                 holder.imgAvatar.setPadding(0,0,0,0);
                 Glide.with(holder.itemView.getContext())
                         .load(item.imageUrl)
                         .circleCrop()
                         .into(holder.imgAvatar);
             } else {
-                // CASE 2: User DOES NOT have a picture
-                holder.imgAvatar.clearColorFilter(); // Remove any tint (shows original drawable colors)
+                holder.imgAvatar.clearColorFilter();
                 holder.imgAvatar.setPadding(0,0,0,0);
                 holder.imgAvatar.setImageResource(R.drawable.ic_default_user);
             }
@@ -168,13 +148,6 @@ public class HomeActivity extends AppCompatActivity {
             }
         }
     }
-    // --- TESTIMONIALS LOGIC END ---
-
-    // ... (Keep existing methods: setupActiveRepairsCarousel, setupTrustSection, setupAdSlider, setupSearchBar, etc.) ...
-
-    // --- COPY PASTE THE REST OF THE EXISTING METHODS HERE (setupActiveRepairsCarousel, etc.) ---
-    // For brevity in the response, assume the rest of the file logic is preserved as previously provided.
-    // Ensure you keep setupActiveRepairsCarousel, setupTrustSection, setupAdSlider, setupGrid, openBooking, setupPopularServices, setupBottomNav, and their inner classes.
 
     private final Runnable trackerRunnable = new Runnable() {
         @Override

@@ -1,3 +1,4 @@
+// File: app/src/main/java/com/example/techcare/DatabaseHelper.java
 package com.example.techcare;
 
 import android.annotation.SuppressLint;
@@ -7,10 +8,14 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "TechCare.db";
-    private static final int DATABASE_VERSION = 3;
+    // Updated version to trigger onUpgrade
+    private static final int DATABASE_VERSION = 4;
 
     // Users Table
     private static final String TABLE_USERS = "users";
@@ -28,6 +33,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COL_ISSUE = "issue_description";
     private static final String COL_TYPE = "service_type";
     private static final String COL_STATUS = "status";
+
+    // Reviews Table
+    private static final String TABLE_REVIEWS = "reviews";
+    private static final String COL_REVIEW_ID = "review_id";
+    private static final String COL_REVIEW_EMAIL = "review_email";
+    private static final String COL_REVIEW_RATING = "rating";
+    private static final String COL_REVIEW_COMMENT = "comment";
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -51,13 +63,25 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 COL_TYPE + " TEXT, " +
                 COL_STATUS + " TEXT)";
         db.execSQL(createBookings);
+
+        String createReviews = "CREATE TABLE " + TABLE_REVIEWS + " (" +
+                COL_REVIEW_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                COL_REVIEW_EMAIL + " TEXT, " +
+                COL_REVIEW_RATING + " INTEGER, " +
+                COL_REVIEW_COMMENT + " TEXT)";
+        db.execSQL(createReviews);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_USERS);
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_BOOKINGS);
-        onCreate(db);
+        if (oldVersion < 4) {
+            String createReviews = "CREATE TABLE " + TABLE_REVIEWS + " (" +
+                    COL_REVIEW_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    COL_REVIEW_EMAIL + " TEXT, " +
+                    COL_REVIEW_RATING + " INTEGER, " +
+                    COL_REVIEW_COMMENT + " TEXT)";
+            db.execSQL(createReviews);
+        }
     }
 
     // --- USER METHODS ---
@@ -135,6 +159,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return rows > 0;
     }
 
+    // --- BOOKING METHODS ---
     public boolean addBooking(String email, String device, String issue, String type) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -149,7 +174,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public Cursor getUserBookings(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
-        // Order by ID descending (newest first)
         return db.rawQuery("SELECT * FROM " + TABLE_BOOKINGS +
                         " WHERE " + COL_USER_EMAIL + " = ? ORDER BY " + COL_BOOKING_ID + " DESC",
                 new String[]{email});
@@ -160,5 +184,45 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         ContentValues cv = new ContentValues();
         cv.put(COL_STATUS, newStatus);
         return db.update(TABLE_BOOKINGS, cv, COL_BOOKING_ID + " = ?", new String[]{String.valueOf(bookingId)}) > 0;
+    }
+
+    // --- REVIEW METHODS (NEW) ---
+    public boolean addReview(String email, int rating, String comment) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(COL_REVIEW_EMAIL, email);
+        cv.put(COL_REVIEW_RATING, rating);
+        cv.put(COL_REVIEW_COMMENT, comment);
+        long result = db.insert(TABLE_REVIEWS, null, cv);
+        return result != -1;
+    }
+
+    @SuppressLint("Range")
+    public List<Review> getAllReviews() {
+        List<Review> reviewList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        // Join Reviews with Users to get Name and Image
+        String query = "SELECT r." + COL_REVIEW_COMMENT + ", r." + COL_REVIEW_RATING +
+                ", u." + COL_NAME + ", u." + COL_IMAGE +
+                " FROM " + TABLE_REVIEWS + " r " +
+                " LEFT JOIN " + TABLE_USERS + " u ON r." + COL_REVIEW_EMAIL + " = u." + COL_EMAIL +
+                " ORDER BY r." + COL_REVIEW_ID + " DESC";
+
+        Cursor cursor = db.rawQuery(query, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                String comment = cursor.getString(cursor.getColumnIndex(COL_REVIEW_COMMENT));
+                int rating = cursor.getInt(cursor.getColumnIndex(COL_REVIEW_RATING));
+                String name = cursor.getString(cursor.getColumnIndex(COL_NAME));
+                String image = cursor.getString(cursor.getColumnIndex(COL_IMAGE));
+
+                if (name == null) name = "Anonymous User";
+                reviewList.add(new Review(comment, name, rating, image));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return reviewList;
     }
 }
