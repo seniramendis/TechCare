@@ -1,4 +1,3 @@
-// File: app/src/main/java/com/example/techcare/HomeActivity.java
 package com.example.techcare;
 
 import android.content.Intent;
@@ -66,6 +65,7 @@ public class HomeActivity extends AppCompatActivity {
             setupPopularServices();
             setupTestimonials(); // Now fetches from DB
             setupTrustSection();
+            setupTechTips(); // <--- NEW TECH TIPS SETUP
             setupBottomNav();
         } catch (Exception e) {
             Log.e("HomeActivity", "Error in setup", e);
@@ -540,4 +540,76 @@ public class HomeActivity extends AppCompatActivity {
             }
         }
     }
+
+    // --- NEW TECH TIPS LOGIC START ---
+    private void setupTechTips() {
+        RecyclerView recyclerTips = findViewById(R.id.recycler_tech_tips);
+        if (recyclerTips != null) {
+            recyclerTips.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+
+            List<TechTip> tips = new ArrayList<>();
+            tips.add(new TechTip("Save Battery Life", "Turn off background app refresh.", R.drawable.ic_smartphone));
+            tips.add(new TechTip("Water Damage?", "Turn off immediately. Don't shake.", R.drawable.ic_home_repair_service));
+            tips.add(new TechTip("Speed Up PC", "Clear temp files & disable startups.", R.drawable.ic_laptop));
+            tips.add(new TechTip("Screen Care", "Use microfiber cloth only.", R.drawable.ic_smartphone));
+
+            recyclerTips.setAdapter(new TechTipAdapter(tips));
+        }
+    }
+
+    static class TechTip {
+        String title;
+        String description;
+        int iconRes;
+
+        TechTip(String title, String description, int iconRes) {
+            this.title = title;
+            this.description = description;
+            this.iconRes = iconRes;
+        }
+    }
+
+    class TechTipAdapter extends RecyclerView.Adapter<TechTipAdapter.TipViewHolder> {
+        private final List<TechTip> items;
+
+        TechTipAdapter(List<TechTip> items) {
+            this.items = items;
+        }
+
+        @NonNull
+        @Override
+        public TipViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_tech_tip, parent, false);
+            return new TipViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull TipViewHolder holder, int position) {
+            TechTip item = items.get(position);
+            holder.tvTitle.setText(item.title);
+            holder.tvDesc.setText(item.description);
+            holder.imgIcon.setImageResource(item.iconRes);
+            holder.itemView.setOnClickListener(v ->
+                    Toast.makeText(holder.itemView.getContext(), "Tip: " + item.title, Toast.LENGTH_SHORT).show()
+            );
+        }
+
+        @Override
+        public int getItemCount() {
+            return items.size();
+        }
+
+        class TipViewHolder extends RecyclerView.ViewHolder {
+            TextView tvTitle, tvDesc;
+            ImageView imgIcon;
+
+            TipViewHolder(@NonNull View itemView) {
+                super(itemView);
+                tvTitle = itemView.findViewById(R.id.tv_tip_title);
+                tvDesc = itemView.findViewById(R.id.tv_tip_desc);
+                imgIcon = itemView.findViewById(R.id.img_tip_icon);
+            }
+        }
+    }
+    
 }
