@@ -16,4 +16,7 @@
     <color name="brand_accent">#00B4D8</color>
 
     <color name="star_gold">#FFD700</color>
+
+    <color name="glass_surface">#263282B8</color>
+    <color name="glass_stroke">#4D3282B8</color>
 </resources>

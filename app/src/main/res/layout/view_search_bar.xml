@@ -5,7 +5,10 @@
     android:id="@+id/search_view"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_bottom_nav_curvy"
+    android:layout_margin="2dp"
+    android:background="@drawable/bg_glass_search"
+    android:theme="@style/ThemeOverlay.AppCompat.Dark"
     app:queryBackground="@null"
     app:queryHint="Search for a service..."
-    app:iconifiedByDefault="false" />
+    app:iconifiedByDefault="false"
+    app:searchIcon="@android:drawable/ic_menu_search" />
