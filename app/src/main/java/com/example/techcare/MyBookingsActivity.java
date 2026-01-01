@@ -1,3 +1,4 @@
+// File: app/src/main/java/com/example/techcare/MyBookingsActivity.java
 package com.example.techcare;
 
 import android.content.Intent;
@@ -51,6 +52,24 @@ public class MyBookingsActivity extends AppCompatActivity {
                 b.issue = cursor.getString(3); // issue
                 b.type = cursor.getString(4); // type
                 b.status = cursor.getString(5); // status
+                // Index 6 = image, 7 = date, 8 = time
+                // [NEW] Get Technician from Index 9
+                // Use try-catch or explicit column index to avoid bounds errors if older DB
+                try {
+                    int techIndex = cursor.getColumnIndex("technician_name");
+                    if (techIndex != -1) {
+                        b.technician = cursor.getString(techIndex);
+                    } else {
+                        b.technician = "Pending Assignment";
+                    }
+                } catch (Exception e) {
+                    b.technician = "Pending Assignment";
+                }
+
+                if (b.technician == null || b.technician.isEmpty()) {
+                    b.technician = "Pending Assignment";
+                }
+
                 bookingList.add(b);
             } while (cursor.moveToNext());
         }
@@ -80,7 +99,6 @@ public class MyBookingsActivity extends AppCompatActivity {
                 finish();
                 return true;
             }
-            // NEW: Handle Services Click
             else if (id == R.id.nav_services) {
                 startActivity(new Intent(this, ServicesActivity.class));
                 overridePendingTransition(0, 0);
@@ -97,9 +115,11 @@ public class MyBookingsActivity extends AppCompatActivity {
         });
     }
 
-    // --- Simple Model & Adapter ---
+    // --- Model & Adapter ---
     static class BookingModel {
-        int id; String device, issue, type, status;
+        int id;
+        String device, issue, type, status;
+        String technician; // [NEW] Field
     }
 
     class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.Holder> {
@@ -115,10 +135,12 @@ public class MyBookingsActivity extends AppCompatActivity {
             h.type.setText(m.type);
             h.status.setText(m.status);
             h.id.setText("Order #" + m.id);
+            // [NEW] Bind Technician
+            h.tech.setText("Tech: " + m.technician);
         }
         @Override public int getItemCount() { return list.size(); }
         class Holder extends RecyclerView.ViewHolder {
-            TextView device, issue, type, status, id;
+            TextView device, issue, type, status, id, tech;
             Holder(View v) {
                 super(v);
                 device = v.findViewById(R.id.tv_device_name);
@@ -126,6 +148,7 @@ public class MyBookingsActivity extends AppCompatActivity {
                 type = v.findViewById(R.id.tv_service_type);
                 status = v.findViewById(R.id.chip_status);
                 id = v.findViewById(R.id.tv_booking_id);
+                tech = v.findViewById(R.id.tv_technician); // [NEW] Bind ID
             }
         }
     }

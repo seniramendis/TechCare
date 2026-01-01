@@ -2,7 +2,6 @@ package com.example.techcare;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -12,6 +11,9 @@ import com.google.android.material.textfield.TextInputEditText;
 public class SignupActivity extends AppCompatActivity {
 
     DatabaseHelper db;
+    TextInputEditText etName, etEmail, etPhone, etPassword; // [CHANGED] Added etPhone
+    Button btnSignup;
+    TextView tvLogin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,41 +22,41 @@ public class SignupActivity extends AppCompatActivity {
 
         db = new DatabaseHelper(this);
 
-        // Finding Views by the IDs we added in XML
-        TextInputEditText etName = findViewById(R.id.et_signup_name);
-        TextInputEditText etEmail = findViewById(R.id.et_signup_email);
-        TextInputEditText etPassword = findViewById(R.id.et_signup_password);
-        Button btnSignup = findViewById(R.id.btn_signup);
-        TextView loginLink = findViewById(R.id.tv_login_link);
+        etName = findViewById(R.id.et_signup_name);
+        etEmail = findViewById(R.id.et_signup_email);
+        etPhone = findViewById(R.id.et_signup_phone); // [NEW] Bind
+        etPassword = findViewById(R.id.et_signup_password);
+        btnSignup = findViewById(R.id.btn_signup);
+        tvLogin = findViewById(R.id.tv_login);
 
-        // Sign Up Button Logic
+        tvLogin.setOnClickListener(v -> {
+            startActivity(new Intent(SignupActivity.this, LoginActivity.class));
+            finish();
+        });
+
         btnSignup.setOnClickListener(v -> {
             String name = etName.getText().toString().trim();
             String email = etEmail.getText().toString().trim();
+            String phone = etPhone.getText().toString().trim(); // [NEW] Get text
             String password = etPassword.getText().toString().trim();
 
-            if (TextUtils.isEmpty(name) || TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
-                Toast.makeText(this, "All fields are required", Toast.LENGTH_SHORT).show();
+            if (name.equals("") || email.equals("") || phone.equals("") || password.equals("")) {
+                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
             } else {
-                // Save to SQLite
-                boolean isInserted = db.insertUser(name, email, password);
-                if (isInserted) {
-                    Toast.makeText(this, "Account Created Successfully!", Toast.LENGTH_SHORT).show();
-                    // Redirect to Login
-                    Intent intent = new Intent(SignupActivity.this, LoginActivity.class);
-                    startActivity(intent);
-                    finish();
+                if (db.checkEmail(email)) {
+                    Toast.makeText(this, "User already exists", Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(this, "Registration Failed. Email may already exist.", Toast.LENGTH_SHORT).show();
+                    // [CHANGED] Pass phone to insertUser
+                    boolean insert = db.insertUser(name, email, phone, password);
+                    if (insert) {
+                        Toast.makeText(this, "Registered Successfully", Toast.LENGTH_SHORT).show();
+                        startActivity(new Intent(SignupActivity.this, LoginActivity.class));
+                        finish();
+                    } else {
+                        Toast.makeText(this, "Registration Failed", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
-        });
-
-        // Link to Login Page
-        loginLink.setOnClickListener(v -> {
-            Intent intent = new Intent(SignupActivity.this, LoginActivity.class);
-            startActivity(intent);
-            finish();
         });
     }
 }
