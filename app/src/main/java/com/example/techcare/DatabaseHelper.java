@@ -1,4 +1,3 @@
-// File: app/src/main/java/com/example/techcare/DatabaseHelper.java
 package com.example.techcare;
 
 import android.annotation.SuppressLint;
@@ -14,8 +13,8 @@ import java.util.Random;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "TechCare.db";
-    // [CHANGED] Increment version to 8
-    private static final int DATABASE_VERSION = 8;
+    // [FIX] Increment version to 9 to trigger the update
+    private static final int DATABASE_VERSION = 9;
 
     // Users Table
     private static final String TABLE_USERS = "users";
@@ -24,7 +23,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COL_EMAIL = "email";
     private static final String COL_PASSWORD = "password";
     private static final String COL_IMAGE = "profile_image";
-    // [NEW] Phone Column
     private static final String COL_PHONE = "phone";
 
     // Bookings Table
@@ -47,18 +45,24 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COL_REVIEW_RATING = "rating";
     private static final String COL_REVIEW_COMMENT = "comment";
 
+    // [NEW] Saved Devices Table
+    private static final String TABLE_DEVICES = "saved_devices";
+    private static final String COL_DEV_ID = "device_id";
+    private static final String COL_DEV_EMAIL = "user_email";
+    private static final String COL_DEV_NAME = "device_name";
+    private static final String COL_DEV_MODEL = "device_model";
+
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // [CHANGED] Add phone column to create statement
         String createUsers = "CREATE TABLE " + TABLE_USERS + " (" +
                 COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 COL_NAME + " TEXT, " +
                 COL_EMAIL + " TEXT UNIQUE, " +
-                COL_PHONE + " TEXT, " +  // [NEW]
+                COL_PHONE + " TEXT, " +
                 COL_PASSWORD + " TEXT, " +
                 COL_IMAGE + " TEXT)";
         db.execSQL(createUsers);
@@ -82,42 +86,51 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 COL_REVIEW_RATING + " INTEGER, " +
                 COL_REVIEW_COMMENT + " TEXT)";
         db.execSQL(createReviews);
+
+        // [NEW] Create Saved Devices Table
+        String createDevices = "CREATE TABLE " + TABLE_DEVICES + " (" +
+                COL_DEV_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                COL_DEV_EMAIL + " TEXT, " +
+                COL_DEV_NAME + " TEXT, " +
+                COL_DEV_MODEL + " TEXT)";
+        db.execSQL(createDevices);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion < 4) { /* ... */ }
-        if (oldVersion < 5) { /* ... */ }
-        if (oldVersion < 6) { /* ... */ }
-        if (oldVersion < 7) { /* ... */ }
-
-        // [NEW] Upgrade to Version 8
         if (oldVersion < 8) {
+            try { db.execSQL("ALTER TABLE " + TABLE_USERS + " ADD COLUMN " + COL_PHONE + " TEXT"); } catch (Exception e) {}
+        }
+
+        // [FIX] Upgrade to Version 9 (Create the missing table)
+        if (oldVersion < 9) {
             try {
-                db.execSQL("ALTER TABLE " + TABLE_USERS + " ADD COLUMN " + COL_PHONE + " TEXT");
-            } catch (Exception e) {}
+                String createDevices = "CREATE TABLE " + TABLE_DEVICES + " (" +
+                        COL_DEV_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        COL_DEV_EMAIL + " TEXT, " +
+                        COL_DEV_NAME + " TEXT, " +
+                        COL_DEV_MODEL + " TEXT)";
+                db.execSQL(createDevices);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
     // --- USER METHODS ---
-    // [CHANGED] Updated to accept phone
     public boolean insertUser(String name, String email, String phone, String password) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put(COL_NAME, name);
         contentValues.put(COL_EMAIL, email);
-        contentValues.put(COL_PHONE, phone); // [NEW]
+        contentValues.put(COL_PHONE, phone);
         contentValues.put(COL_PASSWORD, password);
         contentValues.put(COL_IMAGE, "");
-
-        long result = db.insert(TABLE_USERS, null, contentValues);
-        return result != -1;
+        return db.insert(TABLE_USERS, null, contentValues) != -1;
     }
 
-    // [CHANGED] Updated to check Email OR Phone
     public boolean checkUser(String identifier, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
-        // Check if the identifier matches EITHER email OR phone
         Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_USERS + " WHERE (" +
                 COL_EMAIL + " = ? OR " + COL_PHONE + " = ?) AND " +
                 COL_PASSWORD + " = ?", new String[]{identifier, identifier, password});
@@ -126,15 +139,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return exists;
     }
 
-    // Helper to get email from phone (since we use email as ID for bookings)
     @SuppressLint("Range")
     public String getEmailFromIdentifier(String identifier) {
         SQLiteDatabase db = this.getReadableDatabase();
-        String email = identifier; // Default assume it's an email
+        String email = identifier;
         Cursor cursor = db.rawQuery("SELECT " + COL_EMAIL + " FROM " + TABLE_USERS +
                         " WHERE " + COL_EMAIL + " = ? OR " + COL_PHONE + " = ?",
                 new String[]{identifier, identifier});
-
         if (cursor.moveToFirst()) {
             email = cursor.getString(cursor.getColumnIndex(COL_EMAIL));
         }
@@ -146,17 +157,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public String getUserName(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
         String name = "User";
-        Cursor cursor = db.rawQuery("SELECT " + COL_NAME + " FROM " + TABLE_USERS +
-                " WHERE " + COL_EMAIL + " = ?", new String[]{email});
-
-        if (cursor.moveToFirst()) {
-            name = cursor.getString(cursor.getColumnIndex(COL_NAME));
-        }
+        Cursor cursor = db.rawQuery("SELECT " + COL_NAME + " FROM " + TABLE_USERS + " WHERE " + COL_EMAIL + " = ?", new String[]{email});
+        if (cursor.moveToFirst()) { name = cursor.getString(cursor.getColumnIndex(COL_NAME)); }
         cursor.close();
         return name;
     }
-
-    // ... (Keep remaining methods: getUserImage, updateUserImage, checkEmail, updatePassword, addBooking, etc.) ...
 
     @SuppressLint("Range")
     public String getUserImage(String email) {
@@ -167,12 +172,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cursor.close();
         return imageUri;
     }
+
     public boolean updateUserImage(String email, String imageUri) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(COL_IMAGE, imageUri);
         return db.update(TABLE_USERS, cv, COL_EMAIL + " = ?", new String[]{email}) > 0;
     }
+
     public boolean checkEmail(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_USERS + " WHERE " + COL_EMAIL + " = ?", new String[]{email});
@@ -180,12 +187,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cursor.close();
         return exists;
     }
+
     public boolean updatePassword(String email, String newPassword) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put(COL_PASSWORD, newPassword);
         return db.update(TABLE_USERS, contentValues, COL_EMAIL + " = ?", new String[]{email}) > 0;
     }
+
+    // --- BOOKING METHODS ---
     public boolean addBooking(String email, String device, String issue, String type, String imageUri, String date, String time) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -198,30 +208,32 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cv.put(COL_SCHEDULE_DATE, date);
         cv.put(COL_SCHEDULE_TIME, time);
         String[] techs = {"John Doe", "Sarah Smith", "Mike Ross", "Emily Clark"};
-        String assignedTech = techs[new Random().nextInt(techs.length)];
-        cv.put(COL_TECHNICIAN, assignedTech);
-        long result = db.insert(TABLE_BOOKINGS, null, cv);
-        return result != -1;
+        cv.put(COL_TECHNICIAN, techs[new Random().nextInt(techs.length)]);
+        return db.insert(TABLE_BOOKINGS, null, cv) != -1;
     }
+
     public Cursor getUserBookings(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
         return db.rawQuery("SELECT * FROM " + TABLE_BOOKINGS + " WHERE " + COL_USER_EMAIL + " = ? ORDER BY " + COL_BOOKING_ID + " DESC", new String[]{email});
     }
+
     public boolean updateBookingStatus(int bookingId, String newStatus) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(COL_STATUS, newStatus);
         return db.update(TABLE_BOOKINGS, cv, COL_BOOKING_ID + " = ?", new String[]{String.valueOf(bookingId)}) > 0;
     }
+
+    // --- REVIEW METHODS ---
     public boolean addReview(String email, int rating, String comment) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(COL_REVIEW_EMAIL, email);
         cv.put(COL_REVIEW_RATING, rating);
         cv.put(COL_REVIEW_COMMENT, comment);
-        long result = db.insert(TABLE_REVIEWS, null, cv);
-        return result != -1;
+        return db.insert(TABLE_REVIEWS, null, cv) != -1;
     }
+
     @SuppressLint("Range")
     public List<Review> getAllReviews() {
         List<Review> reviewList = new ArrayList<>();
@@ -240,5 +252,25 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
         cursor.close();
         return reviewList;
+    }
+
+    // --- [FIX] MISSING METHODS FOR SAVED DEVICES ---
+    public boolean addSavedDevice(String email, String name, String model) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(COL_DEV_EMAIL, email);
+        cv.put(COL_DEV_NAME, name);
+        cv.put(COL_DEV_MODEL, model);
+        return db.insert(TABLE_DEVICES, null, cv) != -1;
+    }
+
+    public Cursor getSavedDevices(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM " + TABLE_DEVICES + " WHERE " + COL_DEV_EMAIL + " = ? ORDER BY " + COL_DEV_ID + " DESC", new String[]{email});
+    }
+
+    public boolean deleteDevice(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        return db.delete(TABLE_DEVICES, COL_DEV_ID + " = ?", new String[]{String.valueOf(id)}) > 0;
     }
 }
