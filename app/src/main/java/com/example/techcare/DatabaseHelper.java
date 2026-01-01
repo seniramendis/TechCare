@@ -14,8 +14,8 @@ import java.util.List;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "TechCare.db";
-    // Updated version to trigger onUpgrade
-    private static final int DATABASE_VERSION = 4;
+    // [CHANGED] Updated version to trigger onUpgrade
+    private static final int DATABASE_VERSION = 5;
 
     // Users Table
     private static final String TABLE_USERS = "users";
@@ -33,6 +33,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COL_ISSUE = "issue_description";
     private static final String COL_TYPE = "service_type";
     private static final String COL_STATUS = "status";
+    // [NEW] Column for Photo URI
+    private static final String COL_BOOKING_IMAGE = "booking_image";
 
     // Reviews Table
     private static final String TABLE_REVIEWS = "reviews";
@@ -55,13 +57,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 COL_IMAGE + " TEXT)";
         db.execSQL(createUsers);
 
+        // [CHANGED] Added COL_BOOKING_IMAGE to the create statement
         String createBookings = "CREATE TABLE " + TABLE_BOOKINGS + " (" +
                 COL_BOOKING_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 COL_USER_EMAIL + " TEXT, " +
                 COL_DEVICE + " TEXT, " +
                 COL_ISSUE + " TEXT, " +
                 COL_TYPE + " TEXT, " +
-                COL_STATUS + " TEXT)";
+                COL_STATUS + " TEXT, " +
+                COL_BOOKING_IMAGE + " TEXT)";
         db.execSQL(createBookings);
 
         String createReviews = "CREATE TABLE " + TABLE_REVIEWS + " (" +
@@ -81,6 +85,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     COL_REVIEW_RATING + " INTEGER, " +
                     COL_REVIEW_COMMENT + " TEXT)";
             db.execSQL(createReviews);
+        }
+        // [NEW] Handle upgrade to Version 5 to add the image column
+        if (oldVersion < 5) {
+            try {
+                db.execSQL("ALTER TABLE " + TABLE_BOOKINGS + " ADD COLUMN " + COL_BOOKING_IMAGE + " TEXT");
+            } catch (Exception e) {
+                // Column might already exist if dev was experimenting, ignore
+            }
         }
     }
 
@@ -160,7 +172,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     // --- BOOKING METHODS ---
-    public boolean addBooking(String email, String device, String issue, String type) {
+    // [CHANGED] Method signature updated to include imageUri
+    public boolean addBooking(String email, String device, String issue, String type, String imageUri) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(COL_USER_EMAIL, email);
@@ -168,6 +181,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cv.put(COL_ISSUE, issue);
         cv.put(COL_TYPE, type);
         cv.put(COL_STATUS, "Received");
+        cv.put(COL_BOOKING_IMAGE, imageUri); // [NEW] Save image URI
         long result = db.insert(TABLE_BOOKINGS, null, cv);
         return result != -1;
     }
@@ -186,7 +200,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return db.update(TABLE_BOOKINGS, cv, COL_BOOKING_ID + " = ?", new String[]{String.valueOf(bookingId)}) > 0;
     }
 
-    // --- REVIEW METHODS (NEW) ---
+    // --- REVIEW METHODS ---
     public boolean addReview(String email, int rating, String comment) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -202,7 +216,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         List<Review> reviewList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
-        // Join Reviews with Users to get Name and Image
         String query = "SELECT r." + COL_REVIEW_COMMENT + ", r." + COL_REVIEW_RATING +
                 ", u." + COL_NAME + ", u." + COL_IMAGE +
                 " FROM " + TABLE_REVIEWS + " r " +
