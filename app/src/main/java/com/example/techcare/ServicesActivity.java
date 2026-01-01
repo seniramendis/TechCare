@@ -7,11 +7,13 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
+
+import com.bumptech.glide.Glide;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class ServicesActivity extends AppCompatActivity {
@@ -36,6 +38,49 @@ public class ServicesActivity extends AppCompatActivity {
 
         // Initialize the new feedback section
         setupFeedbackSection();
+
+        // Load background images from API (using Glide)
+        loadServiceImages();
+    }
+
+    private void loadServiceImages() {
+        // Using high-quality unsplash images.
+
+        // Smartphone Repair
+        ImageView imgPhone = findViewById(R.id.img_bg_phone);
+        if (imgPhone != null) {
+            Glide.with(this)
+                    .load("https://images.unsplash.com/photo-1512054502232-10a0a035d672?w=500&q=80") // Mobile Repair
+                    .centerCrop()
+                    .into(imgPhone);
+        }
+
+        // Laptop/PC Repair - Updated URL
+        ImageView imgLaptop = findViewById(R.id.img_bg_laptop);
+        if (imgLaptop != null) {
+            Glide.with(this)
+                    .load("https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&q=80") // Coding/Laptop
+                    .centerCrop()
+                    .into(imgLaptop);
+        }
+
+        // Home Appliances - Updated URL
+        ImageView imgHome = findViewById(R.id.img_bg_home);
+        if (imgHome != null) {
+            Glide.with(this)
+                    .load("https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=500&q=80") // Kitchen/Home
+                    .centerCrop()
+                    .into(imgHome);
+        }
+
+        // Other Electronics
+        ImageView imgOther = findViewById(R.id.img_bg_other);
+        if (imgOther != null) {
+            Glide.with(this)
+                    .load("https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=500&q=80") // Circuit board
+                    .centerCrop()
+                    .into(imgOther);
+        }
     }
 
     private void setupFeedbackSection() {
@@ -81,10 +126,19 @@ public class ServicesActivity extends AppCompatActivity {
     }
 
     private void setupClickListeners() {
-        CardView cardPhone = findViewById(R.id.card_service_phone);
-        CardView cardLaptop = findViewById(R.id.card_service_laptop);
-        CardView cardHome = findViewById(R.id.card_service_home);
-        CardView cardOther = findViewById(R.id.card_service_other);
+        // Using View type to avoid ClassCastException
+        View cardPhone = findViewById(R.id.card_service_phone);
+        View cardLaptop = findViewById(R.id.card_service_laptop);
+        View cardHome = findViewById(R.id.card_service_home);
+        View cardOther = findViewById(R.id.card_service_other);
+
+        // Listener for the new Support Card
+        View cardSupport = findViewById(R.id.card_support);
+        if (cardSupport != null) {
+            cardSupport.setOnClickListener(v -> {
+                Toast.makeText(this, "FAQs and Support Tips", Toast.LENGTH_SHORT).show();
+            });
+        }
 
         if(cardPhone != null) cardPhone.setOnClickListener(v -> openBooking("Smartphone"));
         if(cardLaptop != null) cardLaptop.setOnClickListener(v -> openBooking("Laptop/PC"));

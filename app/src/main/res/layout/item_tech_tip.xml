@@ -2,72 +2,117 @@
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="240dp"
-    android:layout_height="wrap_content"
+    android:layout_width="300dp"
+    android:layout_height="200dp"
     android:layout_marginEnd="16dp"
     android:layout_marginBottom="8dp"
-    app:cardBackgroundColor="@color/glass_surface"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="0dp"
+    app:cardBackgroundColor="@color/brand_surface"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="6dp"
     app:strokeColor="@color/glass_stroke"
     app:strokeWidth="1dp"
     app:rippleColor="@color/brand_primary">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:layout_height="match_parent">
 
         <ImageView
-            android:id="@+id/img_tip_icon"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
             android:src="@drawable/ic_smartphone"
-            app:tint="@color/brand_accent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:tint="@color/brand_primary"
+            android:alpha="0.05"
+            android:rotation="-15"
+            android:translationX="30dp"
+            android:translationY="30dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-        <TextView
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_bottom_nav_curvy"
+            android:alpha="0.3" />
+
+        <LinearLayout
+            android:id="@+id/container_badge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="TIP"
-            android:textSize="10sp"
-            android:letterSpacing="0.1"
-            android:textColor="@color/brand_primary"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/img_tip_icon"
-            app:layout_constraintBottom_toBottomOf="@id/img_tip_icon" />
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="20dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_bottom_nav_curvy"
+            android:backgroundTint="#202196F3"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="6dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/img_tip_icon"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_smartphone"
+                app:tint="@color/brand_accent" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PRO TIP"
+                android:textSize="11sp"
+                android:layout_marginStart="8dp"
+                android:letterSpacing="0.1"
+                android:textColor="@color/brand_accent"
+                android:textStyle="bold" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tv_tip_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Tip Title"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="20dp"
+            android:text="Battery Health Saver"
             android:textColor="@color/text_primary"
-            android:textSize="16sp"
+            android:textSize="20sp"
             android:textStyle="bold"
-            android:maxLines="1"
+            android:maxLines="2"
             android:ellipsize="end"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintStart_toStartOf="@id/container_badge"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/img_tip_icon" />
+            app:layout_constraintTop_toBottomOf="@id/container_badge" />
 
         <TextView
             android:id="@+id/tv_tip_desc"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Short description of the tip goes here."
+            android:layout_height="0dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="16dp"
+            android:text="Avoid charging your phone to 100% overnight to extend battery lifespan significantly."
             android:textColor="@color/text_secondary"
-            android:textSize="13sp"
-            android:lineHeight="18sp"
+            android:textSize="14sp"
+            android:lineHeight="20sp"
             android:maxLines="3"
             android:ellipsize="end"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintStart_toStartOf="@id/tv_tip_title"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tv_tip_title" />
+            app:layout_constraintTop_toBottomOf="@id/tv_tip_title"
+            app:layout_constraintBottom_toTopOf="@id/btn_read_more"/>
+
+        <TextView
+            android:id="@+id/btn_read_more"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Read Article →"
+            android:textColor="@color/brand_primary"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginBottom="20dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="@id/tv_tip_title" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

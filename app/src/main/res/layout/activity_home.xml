@@ -18,14 +18,12 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingBottom="32dp">
-
-            <include
-                android:id="@+id/header"
-                layout="@layout/view_header"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:layout_constraintTop_toTopOf="parent" />
+            android:paddingBottom="100dp"> <include
+            android:id="@+id/header"
+            layout="@layout/view_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="parent" />
 
             <include
                 android:id="@+id/search_view"
@@ -306,18 +304,36 @@
                 android:layout_marginTop="8dp"
                 app:layout_constraintTop_toBottomOf="@id/tv_trust_label" />
 
-            <TextView
-                android:id="@+id/tv_tips_label"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:id="@+id/layout_tips_header"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
                 android:layout_marginTop="24dp"
-                android:text="Tech Tips &amp; Tricks"
-                android:textColor="@color/text_primary"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/pager_trust" />
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                app:layout_constraintTop_toBottomOf="@id/pager_trust">
+
+                <TextView
+                    android:id="@+id/tv_tips_label"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Tech Tips &amp; Tricks"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="View All"
+                    android:textColor="@color/brand_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:padding="8dp"/>
+            </LinearLayout>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_tech_tips"
@@ -329,7 +345,8 @@
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                app:layout_constraintTop_toBottomOf="@id/tv_tips_label" />
+                app:layout_constraintTop_toBottomOf="@id/layout_tips_header" />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 
