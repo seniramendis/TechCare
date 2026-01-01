@@ -1,5 +1,8 @@
+// File: app/src/main/java/com/example/techcare/BookingActivity.java
 package com.example.techcare;
 
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -17,18 +20,20 @@ import androidx.appcompat.widget.SearchView;
 import androidx.cardview.widget.CardView;
 import com.bumptech.glide.Glide;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import java.util.Calendar;
+import java.util.Locale;
 
 public class BookingActivity extends AppCompatActivity {
 
     DatabaseHelper db;
-    EditText etDevice, etIssue;
+    EditText etDevice, etIssue, etDate, etTime; // [CHANGED] Added etDate, etTime
     Button btnSubmit, btnUpload;
     ImageView imgPreview, imgHero, imgPickup, imgDropoff, icCheckPickup, icCheckDropoff;
     TextView tvPhotoStatus, tvTitle;
     View cardPickup, cardDropoff;
 
     String selectedImageUri = "";
-    String serviceType = "Drop-off"; // Default
+    String serviceType = "Drop-off";
     ActivityResultLauncher<String> mGetContent;
 
     @Override
@@ -41,6 +46,8 @@ public class BookingActivity extends AppCompatActivity {
         // Bind Views
         etDevice = findViewById(R.id.et_device);
         etIssue = findViewById(R.id.et_issue);
+        etDate = findViewById(R.id.et_schedule_date); // [NEW]
+        etTime = findViewById(R.id.et_schedule_time); // [NEW]
         btnSubmit = findViewById(R.id.btn_submit_request);
         btnUpload = findViewById(R.id.btn_upload_photo);
         imgPreview = findViewById(R.id.img_preview);
@@ -59,8 +66,12 @@ public class BookingActivity extends AppCompatActivity {
         HeaderUtils.setupHeader(this);
         setupBottomNav();
         setupSearchBar();
-        setupApiImages(); // Logic for Pro Images
-        setupServiceSelection(); // Logic for Cards
+        setupApiImages();
+        setupServiceSelection();
+
+        // [NEW] Setup Date & Time Pickers
+        etDate.setOnClickListener(v -> showDatePicker());
+        etTime.setOnClickListener(v -> showTimePicker());
 
         mGetContent = registerForActivityResult(new ActivityResultContracts.GetContent(),
                 uri -> {
@@ -76,9 +87,39 @@ public class BookingActivity extends AppCompatActivity {
         btnSubmit.setOnClickListener(v -> submitBooking());
     }
 
+    // [NEW] Show Date Picker Dialog
+    private void showDatePicker() {
+        final Calendar c = Calendar.getInstance();
+        int year = c.get(Calendar.YEAR);
+        int month = c.get(Calendar.MONTH);
+        int day = c.get(Calendar.DAY_OF_MONTH);
+
+        DatePickerDialog datePickerDialog = new DatePickerDialog(this,
+                (view, year1, monthOfYear, dayOfMonth) -> {
+                    String date = String.format(Locale.getDefault(), "%04d-%02d-%02d", year1, monthOfYear + 1, dayOfMonth);
+                    etDate.setText(date);
+                }, year, month, day);
+        datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1000); // Disable past dates
+        datePickerDialog.show();
+    }
+
+    // [NEW] Show Time Picker Dialog
+    private void showTimePicker() {
+        final Calendar c = Calendar.getInstance();
+        int hour = c.get(Calendar.HOUR_OF_DAY);
+        int minute = c.get(Calendar.MINUTE);
+
+        TimePickerDialog timePickerDialog = new TimePickerDialog(this,
+                (view, hourOfDay, minute1) -> {
+                    String time = String.format(Locale.getDefault(), "%02d:%02d", hourOfDay, minute1);
+                    etTime.setText(time);
+                }, hour, minute, true);
+        timePickerDialog.show();
+    }
+
     private void setupApiImages() {
         String autoDevice = getIntent().getStringExtra("DEVICE_TYPE");
-        String heroUrl = "https://images.unsplash.com/photo-1581092921461-eab62e97a782?w=800&q=80"; // Default
+        String heroUrl = "https://images.unsplash.com/photo-1581092921461-eab62e97a782?w=800&q=80";
 
         if(autoDevice != null) {
             etDevice.setText(autoDevice);
@@ -127,6 +168,8 @@ public class BookingActivity extends AppCompatActivity {
     private void submitBooking() {
         String device = etDevice.getText().toString();
         String issue = etIssue.getText().toString();
+        String date = etDate.getText().toString(); // [NEW]
+        String time = etTime.getText().toString(); // [NEW]
 
         SharedPreferences prefs = getSharedPreferences("UserPrefs", MODE_PRIVATE);
         String email = prefs.getString("email", "");
@@ -136,12 +179,14 @@ public class BookingActivity extends AppCompatActivity {
             return;
         }
 
-        if(device.isEmpty() || issue.isEmpty()) {
-            Toast.makeText(this, "Please fill in all details", Toast.LENGTH_SHORT).show();
+        // [CHANGED] Added validation for date/time
+        if(device.isEmpty() || issue.isEmpty() || date.isEmpty() || time.isEmpty()) {
+            Toast.makeText(this, "Please fill in all details including schedule", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        boolean success = db.addBooking(email, device, issue, serviceType, selectedImageUri);
+        // [CHANGED] Pass date and time to database
+        boolean success = db.addBooking(email, device, issue, serviceType, selectedImageUri, date, time);
         if(success) {
             Toast.makeText(this, "Repair Request Submitted!", Toast.LENGTH_LONG).show();
             startActivity(new Intent(this, MyBookingsActivity.class));
@@ -155,7 +200,6 @@ public class BookingActivity extends AppCompatActivity {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
         if (bottomNav != null) {
             bottomNav.setSelectedItemId(R.id.nav_bookings);
-
             bottomNav.setOnItemSelectedListener(item -> {
                 int id = item.getItemId();
                 if (id == R.id.nav_home) {
