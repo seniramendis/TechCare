@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">TechCare</string>
+    <string name="device_icon">Device Icon</string>
 </resources>

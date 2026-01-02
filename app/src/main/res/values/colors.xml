@@ -19,4 +19,5 @@
 
     <color name="glass_surface">#263282B8</color>
     <color name="glass_stroke">#4D3282B8</color>
+    <color name="delete_icon_tint">#FF4444</color>
 </resources>

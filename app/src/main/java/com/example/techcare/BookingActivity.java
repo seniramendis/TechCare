@@ -1,11 +1,13 @@
-// File: app/src/main/java/com/example/techcare/BookingActivity.java
 package com.example.techcare;
 
+import android.Manifest; // [NEW]
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager; // [NEW]
 import android.graphics.Color;
+import android.os.Build; // [NEW]
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -18,6 +20,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat; // [NEW]
 import com.bumptech.glide.Glide;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import java.util.Calendar;
@@ -26,7 +29,7 @@ import java.util.Locale;
 public class BookingActivity extends AppCompatActivity {
 
     DatabaseHelper db;
-    EditText etDevice, etIssue, etDate, etTime; // [CHANGED] Added etDate, etTime
+    EditText etDevice, etIssue, etDate, etTime;
     Button btnSubmit, btnUpload;
     ImageView imgPreview, imgHero, imgPickup, imgDropoff, icCheckPickup, icCheckDropoff;
     TextView tvPhotoStatus, tvTitle;
@@ -36,18 +39,33 @@ public class BookingActivity extends AppCompatActivity {
     String serviceType = "Drop-off";
     ActivityResultLauncher<String> mGetContent;
 
+    // [NEW] Permission Request Launcher for Notifications
+    private final ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    // Permission granted, notifications will work
+                } else {
+                    // Permission denied, notifications won't show
+                }
+            });
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_booking);
+
+        // [NEW] Initialize Notification Channel
+        NotificationHelper.createNotificationChannel(this);
+        // [NEW] Check for Notification Permission on Android 13+
+        checkNotificationPermission();
 
         db = new DatabaseHelper(this);
 
         // Bind Views
         etDevice = findViewById(R.id.et_device);
         etIssue = findViewById(R.id.et_issue);
-        etDate = findViewById(R.id.et_schedule_date); // [NEW]
-        etTime = findViewById(R.id.et_schedule_time); // [NEW]
+        etDate = findViewById(R.id.et_schedule_date);
+        etTime = findViewById(R.id.et_schedule_time);
         btnSubmit = findViewById(R.id.btn_submit_request);
         btnUpload = findViewById(R.id.btn_upload_photo);
         imgPreview = findViewById(R.id.img_preview);
@@ -69,7 +87,7 @@ public class BookingActivity extends AppCompatActivity {
         setupApiImages();
         setupServiceSelection();
 
-        // [NEW] Setup Date & Time Pickers
+        // Setup Date & Time Pickers
         etDate.setOnClickListener(v -> showDatePicker());
         etTime.setOnClickListener(v -> showTimePicker());
 
@@ -87,7 +105,17 @@ public class BookingActivity extends AppCompatActivity {
         btnSubmit.setOnClickListener(v -> submitBooking());
     }
 
-    // [NEW] Show Date Picker Dialog
+    // [NEW] Helper to check permission
+    private void checkNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+                    PackageManager.PERMISSION_GRANTED) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+            }
+        }
+    }
+
+    // Show Date Picker Dialog
     private void showDatePicker() {
         final Calendar c = Calendar.getInstance();
         int year = c.get(Calendar.YEAR);
@@ -103,7 +131,7 @@ public class BookingActivity extends AppCompatActivity {
         datePickerDialog.show();
     }
 
-    // [NEW] Show Time Picker Dialog
+    // Show Time Picker Dialog
     private void showTimePicker() {
         final Calendar c = Calendar.getInstance();
         int hour = c.get(Calendar.HOUR_OF_DAY);
@@ -168,8 +196,8 @@ public class BookingActivity extends AppCompatActivity {
     private void submitBooking() {
         String device = etDevice.getText().toString();
         String issue = etIssue.getText().toString();
-        String date = etDate.getText().toString(); // [NEW]
-        String time = etTime.getText().toString(); // [NEW]
+        String date = etDate.getText().toString();
+        String time = etTime.getText().toString();
 
         SharedPreferences prefs = getSharedPreferences("UserPrefs", MODE_PRIVATE);
         String email = prefs.getString("email", "");
@@ -179,15 +207,20 @@ public class BookingActivity extends AppCompatActivity {
             return;
         }
 
-        // [CHANGED] Added validation for date/time
         if(device.isEmpty() || issue.isEmpty() || date.isEmpty() || time.isEmpty()) {
             Toast.makeText(this, "Please fill in all details including schedule", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // [CHANGED] Pass date and time to database
         boolean success = db.addBooking(email, device, issue, serviceType, selectedImageUri, date, time);
         if(success) {
+            // [NEW] Trigger System Notification
+            NotificationHelper.sendBookingNotification(
+                    this,
+                    "Booking Confirmed",
+                    "Your " + serviceType + " request for " + device + " has been received."
+            );
+
             Toast.makeText(this, "Repair Request Submitted!", Toast.LENGTH_LONG).show();
             startActivity(new Intent(this, MyBookingsActivity.class));
             finish();
