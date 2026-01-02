@@ -6,6 +6,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -13,7 +15,6 @@ import java.util.Random;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "TechCare.db";
-    // [FIX] Increment version to 9 to trigger the update
     private static final int DATABASE_VERSION = 9;
 
     // Users Table
@@ -45,7 +46,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COL_REVIEW_RATING = "rating";
     private static final String COL_REVIEW_COMMENT = "comment";
 
-    // [NEW] Saved Devices Table
+    // Saved Devices Table
     private static final String TABLE_DEVICES = "saved_devices";
     private static final String COL_DEV_ID = "device_id";
     private static final String COL_DEV_EMAIL = "user_email";
@@ -87,7 +88,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 COL_REVIEW_COMMENT + " TEXT)";
         db.execSQL(createReviews);
 
-        // [NEW] Create Saved Devices Table
         String createDevices = "CREATE TABLE " + TABLE_DEVICES + " (" +
                 COL_DEV_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 COL_DEV_EMAIL + " TEXT, " +
@@ -99,10 +99,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         if (oldVersion < 8) {
-            try { db.execSQL("ALTER TABLE " + TABLE_USERS + " ADD COLUMN " + COL_PHONE + " TEXT"); } catch (Exception e) {}
+            try {
+                db.execSQL("ALTER TABLE " + TABLE_USERS + " ADD COLUMN " + COL_PHONE + " TEXT");
+            } catch (Exception e) {
+                Log.e("DatabaseHelper", "Error upgrading to version 8", e);
+            }
         }
 
-        // [FIX] Upgrade to Version 9 (Create the missing table)
         if (oldVersion < 9) {
             try {
                 String createDevices = "CREATE TABLE " + TABLE_DEVICES + " (" +
@@ -112,7 +115,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         COL_DEV_MODEL + " TEXT)";
                 db.execSQL(createDevices);
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e("DatabaseHelper", "Error upgrading to version 9", e);
             }
         }
     }
@@ -254,7 +257,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return reviewList;
     }
 
-    // --- [FIX] MISSING METHODS FOR SAVED DEVICES ---
+    // --- SAVED DEVICES METHODS ---
     public boolean addSavedDevice(String email, String name, String model) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -266,11 +269,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public Cursor getSavedDevices(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
-        return db.rawQuery("SELECT * FROM " + TABLE_DEVICES + " WHERE " + COL_DEV_EMAIL + " = ? ORDER BY " + COL_DEV_ID + " DESC", new String[]{email});
+        return db.rawQuery("SELECT * FROM " + TABLE_DEVICES + " WHERE " + COL_DEV_EMAIL + " = ?", new String[]{email});
     }
-
-    public boolean deleteDevice(int id) {
+    
+    public void deleteDevice(int deviceId) {
         SQLiteDatabase db = this.getWritableDatabase();
-        return db.delete(TABLE_DEVICES, COL_DEV_ID + " = ?", new String[]{String.valueOf(id)}) > 0;
+        db.delete(TABLE_DEVICES, COL_DEV_ID + " = ?", new String[]{String.valueOf(deviceId)});
     }
 }

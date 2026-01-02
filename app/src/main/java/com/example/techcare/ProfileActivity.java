@@ -11,7 +11,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -78,7 +77,7 @@ public class ProfileActivity extends AppCompatActivity {
         tvBookingCount = findViewById(R.id.tv_stat_bookings);
         imgProfile = findViewById(R.id.img_profile_pic);
 
-        Button btnAddDevice = findViewById(R.id.btn_add_device);
+        TextView btnAddDevice = findViewById(R.id.btn_add_device);
         recyclerDevices = findViewById(R.id.recycler_devices);
         tvNoDevices = findViewById(R.id.tv_no_devices);
 
