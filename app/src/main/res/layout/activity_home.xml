@@ -6,6 +6,8 @@
     android:layout_height="match_parent"
     android:background="@color/brand_background">
 
+    <include layout="@layout/view_status_bar_placeholder" />
+
     <ScrollView
         android:id="@+id/scroll_content"
         android:layout_width="0dp"

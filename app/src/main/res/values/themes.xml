@@ -2,6 +2,10 @@
     <style name="Base.Theme.TechCare" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimaryContainer">#2C3E50</item>
         <item name="colorOnPrimaryContainer">@color/nav_active_green</item>
+
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
 
     <style name="Theme.TechCare" parent="Base.Theme.TechCare" />

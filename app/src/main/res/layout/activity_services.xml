@@ -6,6 +6,8 @@
     android:layout_height="match_parent"
     android:background="@color/brand_background">
 
+    <include layout="@layout/view_status_bar_placeholder" />
+
     <include
         android:id="@+id/header"
         layout="@layout/view_header"
