@@ -4,37 +4,46 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
+    android:layout_marginBottom="16dp"
+    android:layout_marginHorizontal="4dp"
     app:cardBackgroundColor="@color/brand_surface"
-    app:cardCornerRadius="20dp"
-    app:cardElevation="0dp"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="6dp"
     app:strokeColor="@color/glass_stroke"
     app:strokeWidth="1dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:padding="20dp">
 
-        <ImageView
-            android:id="@+id/img_device_icon"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:src="@drawable/ic_smartphone"
-            app:tint="@color/brand_primary"
+        <FrameLayout
+            android:id="@+id/container_icon"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
             android:background="@drawable/bg_soft_circle"
-            android:padding="12dp"
+            android:padding="14dp"
+            android:elevation="0dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <ImageView
+                android:id="@+id/img_device_icon"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_smartphone"
+                app:tint="@color/brand_primary"/>
+        </FrameLayout>
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginStart="16dp"
+            android:layout_marginStart="20dp"
             android:layout_marginEnd="16dp"
-            app:layout_constraintStart_toEndOf="@id/img_device_icon"
+            android:gravity="center_vertical"
+            app:layout_constraintStart_toEndOf="@id/container_icon"
             app:layout_constraintEnd_toStartOf="@id/btn_delete_device"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent">
@@ -43,29 +52,31 @@
                 android:id="@+id/tv_device_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="My iPhone"
+                android:text="Device Name"
                 android:textColor="@color/text_primary"
-                android:textSize="16sp"
+                android:textSize="18sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.02"/>
+                android:fontFamily="sans-serif-medium"/>
 
             <TextView
                 android:id="@+id/tv_device_model"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="iPhone 13 Pro Max"
+                android:text="Model Info"
                 android:textColor="@color/text_secondary"
-                android:textSize="13sp"
-                android:layout_marginTop="2dp"/>
+                android:textSize="14sp"
+                android:layout_marginTop="4dp"/>
         </LinearLayout>
 
         <ImageButton
             android:id="@+id/btn_delete_device"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_more_horiz"
-            app:tint="@color/text_hint"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_delete"
             android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="10dp"
+            android:scaleType="fitCenter"
+            app:tint="#FF4444"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
