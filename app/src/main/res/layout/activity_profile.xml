@@ -253,44 +253,6 @@
                     android:layout_marginHorizontal="24dp"/>
 
                 <LinearLayout
-                    android:id="@+id/menu_payment"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="?attr/selectableItemBackground"
-                    android:gravity="center_vertical"
-                    android:paddingHorizontal="24dp"
-                    android:paddingVertical="16dp">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_home_repair_service"
-                        app:tint="@color/brand_primary" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="20dp"
-                        android:text="Payment Methods"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp" />
-
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_more_horiz"
-                        app:tint="@color/text_secondary"
-                        android:rotation="180"/>
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="@color/glass_stroke"
-                    android:layout_marginHorizontal="24dp"/>
-
-                <LinearLayout
                     android:id="@+id/menu_help"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

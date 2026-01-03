@@ -187,7 +187,7 @@ public class ProfileActivity extends AppCompatActivity {
         findViewById(R.id.btn_edit_name).setOnClickListener(v -> showEditNameDialog());
 
         findViewById(R.id.menu_my_bookings).setOnClickListener(v -> startActivity(new Intent(this, MyBookingsActivity.class)));
-        findViewById(R.id.menu_payment).setOnClickListener(v -> Toast.makeText(this, "Payment integration coming soon!", Toast.LENGTH_SHORT).show());
+        // Payment method click listener removed here
         findViewById(R.id.menu_help).setOnClickListener(v -> Toast.makeText(this, "Support Center coming soon!", Toast.LENGTH_SHORT).show());
 
         findViewById(R.id.btn_logout).setOnClickListener(v -> {
