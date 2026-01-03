@@ -33,6 +33,11 @@
         <activity android:name=".MyBookingsActivity" android:exported="false" />
 
         <activity
+            android:name=".SupportActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <activity
             android:name=".TestimonialsActivity"
             android:exported="false"
             android:screenOrientation="portrait" />

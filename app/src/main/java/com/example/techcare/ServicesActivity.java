@@ -50,25 +50,25 @@ public class ServicesActivity extends AppCompatActivity {
         ImageView imgPhone = findViewById(R.id.img_bg_phone);
         if (imgPhone != null) {
             Glide.with(this)
-                    .load("https://images.unsplash.com/photo-1512054502232-10a0a035d672?w=500&q=80") // Mobile Repair
+                    .load("https://images.unsplash.com/photo-1512054502232-10a0a035d672?w=500&q=80")
                     .centerCrop()
                     .into(imgPhone);
         }
 
-        // Laptop/PC Repair - Updated URL
+        // Laptop/PC Repair
         ImageView imgLaptop = findViewById(R.id.img_bg_laptop);
         if (imgLaptop != null) {
             Glide.with(this)
-                    .load("https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&q=80") // Coding/Laptop
+                    .load("https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&q=80")
                     .centerCrop()
                     .into(imgLaptop);
         }
 
-        // Home Appliances - Updated URL
+        // Home Appliances
         ImageView imgHome = findViewById(R.id.img_bg_home);
         if (imgHome != null) {
             Glide.with(this)
-                    .load("https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=500&q=80") // Kitchen/Home
+                    .load("https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=500&q=80")
                     .centerCrop()
                     .into(imgHome);
         }
@@ -77,7 +77,7 @@ public class ServicesActivity extends AppCompatActivity {
         ImageView imgOther = findViewById(R.id.img_bg_other);
         if (imgOther != null) {
             Glide.with(this)
-                    .load("https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=500&q=80") // Circuit board
+                    .load("https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=500&q=80")
                     .centerCrop()
                     .into(imgOther);
         }
@@ -126,17 +126,16 @@ public class ServicesActivity extends AppCompatActivity {
     }
 
     private void setupClickListeners() {
-        // Using View type to avoid ClassCastException
         View cardPhone = findViewById(R.id.card_service_phone);
         View cardLaptop = findViewById(R.id.card_service_laptop);
         View cardHome = findViewById(R.id.card_service_home);
         View cardOther = findViewById(R.id.card_service_other);
 
-        // Listener for the new Support Card
+        // Listener for the new Support Card (UPDATED to start Activity)
         View cardSupport = findViewById(R.id.card_support);
         if (cardSupport != null) {
             cardSupport.setOnClickListener(v -> {
-                Toast.makeText(this, "FAQs and Support Tips", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(ServicesActivity.this, SupportActivity.class));
             });
         }
 
