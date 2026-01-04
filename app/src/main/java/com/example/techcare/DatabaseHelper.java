@@ -15,7 +15,7 @@ import java.util.Random;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "TechCare.db";
-    private static final int DATABASE_VERSION = 10; // Ensure version is 10
+    private static final int DATABASE_VERSION = 10; // Updated Version
 
     // Users Table
     private static final String TABLE_USERS = "users";
@@ -38,7 +38,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COL_SCHEDULE_DATE = "scheduled_date";
     private static final String COL_SCHEDULE_TIME = "scheduled_time";
     private static final String COL_TECHNICIAN = "technician_name";
-    // Column to track notification status
+    // [NEW] Column to track if we already notified the user
     private static final String COL_NOTIFIED = "is_notified";
 
     // Reviews Table
@@ -73,6 +73,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 COL_IMAGE + " TEXT)";
         db.execSQL(createUsers);
 
+        // [CHANGE] Added COL_NOTIFIED to creation string
         String createBookings = "CREATE TABLE " + TABLE_BOOKINGS + " (" +
                 COL_BOOKING_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 COL_USER_EMAIL + " TEXT, " +
@@ -120,6 +121,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             } catch (Exception e) { Log.e("DatabaseHelper", "Error upgrading to v9", e); }
         }
 
+        // [CHANGE] Upgrade for version 10: Add Notified Column
         if (oldVersion < 10) {
             try {
                 db.execSQL("ALTER TABLE " + TABLE_BOOKINGS + " ADD COLUMN " + COL_NOTIFIED + " INTEGER DEFAULT 0");
@@ -219,8 +221,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cv.put(COL_SCHEDULE_TIME, time);
         cv.put(COL_NOTIFIED, 0); // Notified = False initially
 
-        String[] techs = {"John Doe", "Sarah Smith", "Mike Ross", "Emily Clark"};
+        // [CHANGE] Sri Lankan Technician Names
+        String[] techs = {
+                "Kasun Perera",
+                "Nuwan Silva",
+                "Chamara Bandara",
+                "Amila Fernando",
+                "Ruwan Kumara",
+                "Sanjaya Herath"
+        };
         cv.put(COL_TECHNICIAN, techs[new Random().nextInt(techs.length)]);
+
         return db.insert(TABLE_BOOKINGS, null, cv) != -1;
     }
 
