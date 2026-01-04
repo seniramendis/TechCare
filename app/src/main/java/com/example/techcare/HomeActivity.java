@@ -1,13 +1,16 @@
 package com.example.techcare;
 
+import android.app.SearchManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.database.Cursor;
+import android.database.MatrixCursor;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.BaseColumns;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,6 +26,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.cardview.widget.CardView;
+import androidx.cursoradapter.widget.CursorAdapter;
+import androidx.cursoradapter.widget.SimpleCursorAdapter;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.CompositePageTransformer;
@@ -48,6 +53,7 @@ public class HomeActivity extends AppCompatActivity {
     private final Handler trackerHandler = new Handler(Looper.getMainLooper());
 
     private DatabaseHelper dbHelper;
+    private SimpleCursorAdapter searchAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,18 +64,196 @@ public class HomeActivity extends AppCompatActivity {
 
         try {
             HeaderUtils.setupHeader(this);
-            setupSearchBar();
+            setupSearchBar(); // Now includes Smart Suggestions
             setupActiveRepairsCarousel();
             setupAdSlider();
             setupGrid();
             setupPopularServices();
-            setupTestimonials(); // Now fetches from DB
+            setupTestimonials();
             setupTrustSection();
-            setupTechTips(); // <--- NEW TECH TIPS SETUP
+            setupTechTips();
             setupBottomNav();
         } catch (Exception e) {
             Log.e("HomeActivity", "Error in setup", e);
             Toast.makeText(this, "Error loading home screen: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void setupSearchBar() {
+        SearchView searchView = findViewById(R.id.search_view);
+        if (searchView == null) return;
+
+        // 1. Setup Adapter for Suggestions
+        final String[] from = new String[] { "suggestion" };
+        final int[] to = new int[] { android.R.id.text1 };
+
+        searchAdapter = new SimpleCursorAdapter(this,
+                android.R.layout.simple_list_item_1,
+                null,
+                from,
+                to,
+                CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
+
+        searchView.setSuggestionsAdapter(searchAdapter);
+
+        // 2. Query Listener
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                performGlobalSearch(query);
+                searchView.clearFocus(); // Hide keyboard for better UX
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                populateSearchSuggestions(newText);
+                return true;
+            }
+        });
+
+        // 3. Handle Suggestion Clicks
+        searchView.setOnSuggestionListener(new SearchView.OnSuggestionListener() {
+            @Override
+            public boolean onSuggestionClick(int position) {
+                Cursor cursor = (Cursor) searchAdapter.getItem(position);
+                int index = cursor.getColumnIndex("suggestion");
+                if (index != -1) {
+                    String selection = cursor.getString(index);
+                    searchView.setQuery(selection, true); // This triggers onQueryTextSubmit
+                }
+                return true;
+            }
+
+            @Override
+            public boolean onSuggestionSelect(int position) { return false; }
+        });
+    }
+
+    private void populateSearchSuggestions(String query) {
+        final MatrixCursor c = new MatrixCursor(new String[]{ BaseColumns._ID, "suggestion" });
+
+        // Define all possible shortcuts/actions
+        String[] allSuggestions = {
+                "Profile & Settings",
+                "My Bookings History",
+                "Customer Support",
+                "TechCare Reviews",
+                "Book: Smartphone Repair",
+                "Book: Laptop Service",
+                "Book: Home Appliance",
+                "Book: Other Device",
+                "Service List & Prices",
+                "Contact Us",
+                "Repair Status"
+        };
+
+        query = query.toLowerCase();
+        int id = 0;
+        for (String suggestion : allSuggestions) {
+            if (suggestion.toLowerCase().contains(query)) {
+                c.addRow(new Object[]{id++, suggestion});
+            }
+        }
+
+        // Add dynamic suggestion for booking ID if query is a number
+        if (query.matches("\\d+")) {
+            c.addRow(new Object[]{id++, "Track Booking #" + query});
+        }
+
+        searchAdapter.changeCursor(c);
+    }
+
+    private void performGlobalSearch(String query) {
+        String q = query.toLowerCase().trim();
+        if (q.isEmpty()) return;
+
+        // --- 1. Smart Redirects based on Suggestions ---
+        if (q.contains("track booking #")) {
+            startActivity(new Intent(HomeActivity.this, MyBookingsActivity.class));
+            return;
+        }
+
+        // --- 2. Navigation Shortcuts ---
+        if (q.contains("profile") || q.contains("account") || q.contains("settings")) {
+            startActivity(new Intent(HomeActivity.this, ProfileActivity.class));
+            return;
+        }
+        if (q.contains("booking") || q.contains("order") || q.contains("history") || q.contains("status")) {
+            startActivity(new Intent(HomeActivity.this, MyBookingsActivity.class));
+            return;
+        }
+        if (q.contains("support") || q.contains("help") || q.contains("contact")) {
+            startActivity(new Intent(HomeActivity.this, SupportActivity.class));
+            return;
+        }
+        if (q.contains("review") || q.contains("testimonial")) {
+            startActivity(new Intent(HomeActivity.this, TestimonialsActivity.class));
+            return;
+        }
+        if (q.contains("service") || q.contains("price")) {
+            startActivity(new Intent(HomeActivity.this, ServicesActivity.class));
+            return;
+        }
+
+        // --- 3. Booking Shortcuts ---
+        if (q.contains("laptop") || q.contains("computer") || q.contains("pc")) {
+            openBooking("Laptop/PC");
+            return;
+        }
+        if (q.contains("smartphone") || q.contains("mobile") || q.contains("phone") || q.contains("screen")) {
+            openBooking("Smartphone");
+            return;
+        }
+        if (q.contains("appliance") || q.contains("washing") || q.contains("tv")) {
+            openBooking("Home Appliance");
+            return;
+        }
+        if (q.contains("other") || q.contains("console")) {
+            openBooking("Other Device");
+            return;
+        }
+
+        // --- 4. Database Fallback (Check real booking data) ---
+        checkDatabaseForBooking(query);
+    }
+
+    private void checkDatabaseForBooking(String query) {
+        SharedPreferences prefs = getSharedPreferences("UserPrefs", MODE_PRIVATE);
+        String email = prefs.getString("email", null);
+
+        if (email != null) {
+            Cursor cursor = dbHelper.getUserBookings(email);
+            boolean found = false;
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    do {
+                        int devIdx = cursor.getColumnIndex("device_type");
+                        int idIdx = cursor.getColumnIndex("booking_id");
+
+                        if (devIdx != -1 && idIdx != -1) {
+                            String dev = cursor.getString(devIdx);
+                            String id = String.valueOf(cursor.getInt(idIdx));
+
+                            if (dev.toLowerCase().contains(query.toLowerCase()) || id.equals(query)) {
+                                found = true;
+                                break;
+                            }
+                        }
+                    } while (cursor.moveToNext());
+                }
+            } finally {
+                if (cursor != null) cursor.close();
+            }
+
+            if (found) {
+                Toast.makeText(this, "Opening related booking...", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(HomeActivity.this, MyBookingsActivity.class));
+            } else {
+                Toast.makeText(this, "No specific result found. Try 'Laptop' or 'Profile'.", Toast.LENGTH_LONG).show();
+            }
+        } else {
+            Toast.makeText(this, "Please login to search your history.", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -368,19 +552,6 @@ public class HomeActivity extends AppCompatActivity {
         trackerHandler.removeCallbacks(trackerRunnable);
     }
 
-    private void setupSearchBar() {
-        SearchView searchView = findViewById(R.id.search_view);
-        if (searchView != null) {
-            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-                @Override public boolean onQueryTextSubmit(String query) {
-                    Toast.makeText(HomeActivity.this, "Searching: " + query, Toast.LENGTH_SHORT).show();
-                    return true;
-                }
-                @Override public boolean onQueryTextChange(String newText) { return true; }
-            });
-        }
-    }
-
     private void setupGrid() {
         CardView cardPhone = findViewById(R.id.card_smartphone);
         CardView cardLaptop = findViewById(R.id.card_laptop);
@@ -541,7 +712,7 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    // --- NEW TECH TIPS LOGIC START ---
+    // --- TECH TIPS ---
     private void setupTechTips() {
         RecyclerView recyclerTips = findViewById(R.id.recycler_tech_tips);
         if (recyclerTips != null) {
@@ -611,5 +782,4 @@ public class HomeActivity extends AppCompatActivity {
             }
         }
     }
-    
 }
