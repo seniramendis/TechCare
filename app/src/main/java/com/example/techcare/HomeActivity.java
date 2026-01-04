@@ -1,6 +1,5 @@
 package com.example.techcare;
 
-import android.app.SearchManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
@@ -64,7 +63,7 @@ public class HomeActivity extends AppCompatActivity {
 
         try {
             HeaderUtils.setupHeader(this);
-            setupSearchBar(); // Now includes Smart Suggestions
+            setupSearchBar();
             setupActiveRepairsCarousel();
             setupAdSlider();
             setupGrid();
@@ -83,7 +82,6 @@ public class HomeActivity extends AppCompatActivity {
         SearchView searchView = findViewById(R.id.search_view);
         if (searchView == null) return;
 
-        // 1. Setup Adapter for Suggestions
         final String[] from = new String[] { "suggestion" };
         final int[] to = new int[] { android.R.id.text1 };
 
@@ -96,12 +94,11 @@ public class HomeActivity extends AppCompatActivity {
 
         searchView.setSuggestionsAdapter(searchAdapter);
 
-        // 2. Query Listener
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 performGlobalSearch(query);
-                searchView.clearFocus(); // Hide keyboard for better UX
+                searchView.clearFocus();
                 return true;
             }
 
@@ -112,7 +109,6 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
-        // 3. Handle Suggestion Clicks
         searchView.setOnSuggestionListener(new SearchView.OnSuggestionListener() {
             @Override
             public boolean onSuggestionClick(int position) {
@@ -120,7 +116,7 @@ public class HomeActivity extends AppCompatActivity {
                 int index = cursor.getColumnIndex("suggestion");
                 if (index != -1) {
                     String selection = cursor.getString(index);
-                    searchView.setQuery(selection, true); // This triggers onQueryTextSubmit
+                    searchView.setQuery(selection, true);
                 }
                 return true;
             }
@@ -133,7 +129,6 @@ public class HomeActivity extends AppCompatActivity {
     private void populateSearchSuggestions(String query) {
         final MatrixCursor c = new MatrixCursor(new String[]{ BaseColumns._ID, "suggestion" });
 
-        // Define all possible shortcuts/actions
         String[] allSuggestions = {
                 "Profile & Settings",
                 "My Bookings History",
@@ -156,7 +151,6 @@ public class HomeActivity extends AppCompatActivity {
             }
         }
 
-        // Add dynamic suggestion for booking ID if query is a number
         if (query.matches("\\d+")) {
             c.addRow(new Object[]{id++, "Track Booking #" + query});
         }
@@ -168,13 +162,11 @@ public class HomeActivity extends AppCompatActivity {
         String q = query.toLowerCase().trim();
         if (q.isEmpty()) return;
 
-        // --- 1. Smart Redirects based on Suggestions ---
         if (q.contains("track booking #")) {
             startActivity(new Intent(HomeActivity.this, MyBookingsActivity.class));
             return;
         }
 
-        // --- 2. Navigation Shortcuts ---
         if (q.contains("profile") || q.contains("account") || q.contains("settings")) {
             startActivity(new Intent(HomeActivity.this, ProfileActivity.class));
             return;
@@ -196,7 +188,6 @@ public class HomeActivity extends AppCompatActivity {
             return;
         }
 
-        // --- 3. Booking Shortcuts ---
         if (q.contains("laptop") || q.contains("computer") || q.contains("pc")) {
             openBooking("Laptop/PC");
             return;
@@ -214,7 +205,6 @@ public class HomeActivity extends AppCompatActivity {
             return;
         }
 
-        // --- 4. Database Fallback (Check real booking data) ---
         checkDatabaseForBooking(query);
     }
 
@@ -269,21 +259,15 @@ public class HomeActivity extends AppCompatActivity {
 
         if (recyclerReviews != null) {
             recyclerReviews.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-
-            // FETCH REVIEWS FROM DB
             List<Review> reviews = dbHelper.getAllReviews();
-
-            // Optional: Limit Home Page to top 5 reviews if list is huge
             if (reviews.size() > 5) {
                 reviews = reviews.subList(0, 5);
             }
-
             recyclerReviews.setAdapter(new TestimonialAdapter(reviews));
         }
     }
 
     class TestimonialAdapter extends RecyclerView.Adapter<TestimonialAdapter.ReviewViewHolder> {
-        // Use the new Review class
         private final List<Review> items;
         TestimonialAdapter(List<Review> items) { this.items = items; }
 
@@ -337,7 +321,7 @@ public class HomeActivity extends AppCompatActivity {
         @Override
         public void run() {
             setupActiveRepairsCarousel();
-            trackerHandler.postDelayed(this, 15000);
+            trackerHandler.postDelayed(this, 1000);
         }
     };
 
@@ -377,15 +361,34 @@ public class HomeActivity extends AppCompatActivity {
                             startTime = System.currentTimeMillis();
                             prefs.edit().putLong("booking_start_" + id, startTime).apply();
                         }
-                        long elapsedDays = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - startTime);
+
+                        // --- SIMULATION LOGIC ---
+                        long elapsedSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime);
                         String status;
                         int progress;
-                        if (elapsedDays < 1) { status = "Received"; progress = 10; }
-                        else if (elapsedDays < 2) { status = "Diagnosing"; progress = 35; }
-                        else if (elapsedDays < 3) { status = "Repairing"; progress = 65; }
-                        else if (elapsedDays < 4) { status = "Testing"; progress = 85; }
-                        else { status = "Completed"; progress = 100; }
-                        repairList.add(new RepairItem(device, status, progress, elapsedDays, id));
+
+                        if (elapsedSeconds < 10) {
+                            status = "Received";
+                            progress = 10;
+                        }
+                        else if (elapsedSeconds < 20) {
+                            status = "Diagnosing";
+                            progress = 35;
+                        }
+                        else if (elapsedSeconds < 30) {
+                            status = "Repairing";
+                            progress = 65;
+                        }
+                        else if (elapsedSeconds < 40) {
+                            status = "Testing";
+                            progress = 85;
+                        }
+                        else {
+                            status = "Completed";
+                            progress = 100;
+                        }
+
+                        repairList.add(new RepairItem(device, status, progress, elapsedSeconds, id));
                     }
                 } while (cursor.moveToNext());
             }
@@ -399,18 +402,27 @@ public class HomeActivity extends AppCompatActivity {
             hideRepairsSection(header, repairsViewPager);
         } else {
             showRepairsSection(header, repairsViewPager);
+
             for (RepairItem item : repairList) {
                 dbHelper.updateBookingStatus(item.id, item.status);
             }
-            RepairAdapter adapter = new RepairAdapter(repairList);
-            repairsViewPager.setAdapter(adapter);
-            repairsViewPager.setOffscreenPageLimit(3);
-            repairsViewPager.setClipToPadding(false);
-            repairsViewPager.setClipChildren(false);
-            repairsViewPager.getChildAt(0).setOverScrollMode(RecyclerView.OVER_SCROLL_NEVER);
-            CompositePageTransformer transformer = new CompositePageTransformer();
-            transformer.addTransformer(new MarginPageTransformer(24));
-            repairsViewPager.setPageTransformer(transformer);
+
+            // --- FIX START: Better update mechanism ---
+            if (repairsViewPager.getAdapter() instanceof RepairAdapter) {
+                RepairAdapter adapter = (RepairAdapter) repairsViewPager.getAdapter();
+                adapter.updateList(repairList);
+            } else {
+                RepairAdapter adapter = new RepairAdapter(repairList);
+                repairsViewPager.setAdapter(adapter);
+                repairsViewPager.setOffscreenPageLimit(3);
+                repairsViewPager.setClipToPadding(false);
+                repairsViewPager.setClipChildren(false);
+                repairsViewPager.getChildAt(0).setOverScrollMode(RecyclerView.OVER_SCROLL_NEVER);
+                CompositePageTransformer transformer = new CompositePageTransformer();
+                transformer.addTransformer(new MarginPageTransformer(24));
+                repairsViewPager.setPageTransformer(transformer);
+            }
+            // --- FIX END ---
         }
     }
 
@@ -427,13 +439,13 @@ public class HomeActivity extends AppCompatActivity {
     static class RepairItem {
         String deviceName, status;
         int progress;
-        long elapsedDays;
+        long elapsedSeconds;
         int id;
-        RepairItem(String deviceName, String status, int progress, long elapsedDays, int id) {
+        RepairItem(String deviceName, String status, int progress, long elapsedSeconds, int id) {
             this.deviceName = deviceName;
             this.status = status;
             this.progress = progress;
-            this.elapsedDays = elapsedDays;
+            this.elapsedSeconds = elapsedSeconds;
             this.id = id;
         }
     }
@@ -441,6 +453,21 @@ public class HomeActivity extends AppCompatActivity {
     class RepairAdapter extends RecyclerView.Adapter<RepairAdapter.RepairViewHolder> {
         List<RepairItem> list;
         RepairAdapter(List<RepairItem> list) { this.list = list; }
+
+        // --- FIX: Use notifyItemRangeChanged to prevent jitter ---
+        void updateList(List<RepairItem> newList) {
+            if (list == null || list.size() != newList.size()) {
+                // List structure changed, we must do a full refresh
+                this.list = newList;
+                notifyDataSetChanged();
+            } else {
+                // List structure is same, only data changed.
+                // Using notifyItemRangeChanged prevents ViewPager from snapping/resetting.
+                this.list = newList;
+                notifyItemRangeChanged(0, list.size());
+            }
+        }
+
         @NonNull @Override
         public RepairViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_home_repair_card, parent, false);
@@ -456,8 +483,9 @@ public class HomeActivity extends AppCompatActivity {
             holder.progressBar.setProgress(item.progress);
             holder.progressBar.setProgressTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
             holder.progressBar.setProgressBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E0E0E0")));
+
             if (item.progress < 100) {
-                holder.eta.setText("Day " + (item.elapsedDays + 1) + ": In Progress");
+                holder.eta.setText("In Progress");
             } else {
                 holder.eta.setText("Service Completed");
             }
@@ -712,14 +740,12 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    // --- TECH TIPS ---
     private void setupTechTips() {
         RecyclerView recyclerTips = findViewById(R.id.recycler_tech_tips);
         if (recyclerTips != null) {
             recyclerTips.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
 
             List<TechTip> tips = new ArrayList<>();
-            // Tip 1: Battery
             tips.add(new TechTip(
                     "Save Battery Life",
                     "Turn off background app refresh and lower brightness.",
@@ -727,7 +753,6 @@ public class HomeActivity extends AppCompatActivity {
                     "https://images.unsplash.com/photo-1592434134753-a70baf7979d5?auto=format&fit=crop&w=800&q=80",
                     R.drawable.ic_smartphone));
 
-            // Tip 2: Water Damage
             tips.add(new TechTip(
                     "Water Damage?",
                     "Turn off immediately. Don't shake. Rice doesn't always work.",
@@ -735,7 +760,6 @@ public class HomeActivity extends AppCompatActivity {
                     "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80",
                     R.drawable.ic_home_repair_service));
 
-            // Tip 3: Speed Up PC
             tips.add(new TechTip(
                     "Speed Up PC",
                     "Clear temp files, disable startups, and update drivers.",
@@ -743,7 +767,6 @@ public class HomeActivity extends AppCompatActivity {
                     "https://images.unsplash.com/photo-1587831990711-23ca6441447b?auto=format&fit=crop&w=800&q=80",
                     R.drawable.ic_laptop));
 
-            // Tip 4: Screen Care
             tips.add(new TechTip(
                     "Screen Care",
                     "Use microfiber cloth only. Avoid alcohol-based cleaners.",
@@ -758,8 +781,8 @@ public class HomeActivity extends AppCompatActivity {
     static class TechTip {
         String title;
         String description;
-        String fullContent; // Added field
-        String imageUrl;    // Added field
+        String fullContent;
+        String imageUrl;
         int iconRes;
 
         TechTip(String title, String description, String fullContent, String imageUrl, int iconRes) {
@@ -792,7 +815,6 @@ public class HomeActivity extends AppCompatActivity {
             holder.tvDesc.setText(item.description);
             holder.imgIcon.setImageResource(item.iconRes);
 
-            // Set Click Listener to open Detail Activity
             holder.itemView.setOnClickListener(v -> {
                 Intent intent = new Intent(v.getContext(), TechTipDetailActivity.class);
                 intent.putExtra("TIP_TITLE", item.title);
@@ -801,7 +823,6 @@ public class HomeActivity extends AppCompatActivity {
                 v.getContext().startActivity(intent);
             });
 
-            // If the layout has a specific "Read Article" button/text, bind it too if available
             View readMore = holder.itemView.findViewById(R.id.btn_read_more);
             if (readMore != null) {
                 readMore.setOnClickListener(v -> {
