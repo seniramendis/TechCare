@@ -719,10 +719,37 @@ public class HomeActivity extends AppCompatActivity {
             recyclerTips.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
 
             List<TechTip> tips = new ArrayList<>();
-            tips.add(new TechTip("Save Battery Life", "Turn off background app refresh.", R.drawable.ic_smartphone));
-            tips.add(new TechTip("Water Damage?", "Turn off immediately. Don't shake.", R.drawable.ic_home_repair_service));
-            tips.add(new TechTip("Speed Up PC", "Clear temp files & disable startups.", R.drawable.ic_laptop));
-            tips.add(new TechTip("Screen Care", "Use microfiber cloth only.", R.drawable.ic_smartphone));
+            // Tip 1: Battery
+            tips.add(new TechTip(
+                    "Save Battery Life",
+                    "Turn off background app refresh and lower brightness.",
+                    "Battery health is crucial for your device's longevity. \n\n1. Avoid charging to 100% constantly; keeping it between 20% and 80% is ideal.\n2. Turn off Background App Refresh for apps you don't use often.\n3. Use Dark Mode if your phone has an OLED screen to save power.\n4. Keep your phone away from extreme temperatures.",
+                    "https://images.unsplash.com/photo-1592434134753-a70baf7979d5?auto=format&fit=crop&w=800&q=80",
+                    R.drawable.ic_smartphone));
+
+            // Tip 2: Water Damage
+            tips.add(new TechTip(
+                    "Water Damage?",
+                    "Turn off immediately. Don't shake. Rice doesn't always work.",
+                    "If your device gets wet:\n\n1. Turn it off IMMEDIATELY. Do not try to charge it.\n2. Remove the SIM card and SD card.\n3. Dry the exterior with a cloth.\n4. Do NOT use a hairdryer; the heat can damage seals.\n5. Bring it to TechCare for a professional chemical wash immediately.",
+                    "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80",
+                    R.drawable.ic_home_repair_service));
+
+            // Tip 3: Speed Up PC
+            tips.add(new TechTip(
+                    "Speed Up PC",
+                    "Clear temp files, disable startups, and update drivers.",
+                    "Is your computer running slow?\n\n1. Check your Task Manager for 'Startup' apps and disable ones you don't need.\n2. Run a Disk Cleanup to remove temporary files.\n3. Uninstall unused software.\n4. Consider upgrading your HDD to an SSD for a massive speed boost.",
+                    "https://images.unsplash.com/photo-1587831990711-23ca6441447b?auto=format&fit=crop&w=800&q=80",
+                    R.drawable.ic_laptop));
+
+            // Tip 4: Screen Care
+            tips.add(new TechTip(
+                    "Screen Care",
+                    "Use microfiber cloth only. Avoid alcohol-based cleaners.",
+                    "Your screen is the most used part of your phone.\n\n1. Never use Windex or household glass cleaners; they strip the oleophobic coating.\n2. Use a dedicated microfiber cloth.\n3. Apply a high-quality tempered glass protector.\n4. Don't keep your phone in the same pocket as keys or coins.",
+                    "https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?auto=format&fit=crop&w=800&q=80",
+                    R.drawable.ic_smartphone));
 
             recyclerTips.setAdapter(new TechTipAdapter(tips));
         }
@@ -731,11 +758,15 @@ public class HomeActivity extends AppCompatActivity {
     static class TechTip {
         String title;
         String description;
+        String fullContent; // Added field
+        String imageUrl;    // Added field
         int iconRes;
 
-        TechTip(String title, String description, int iconRes) {
+        TechTip(String title, String description, String fullContent, String imageUrl, int iconRes) {
             this.title = title;
             this.description = description;
+            this.fullContent = fullContent;
+            this.imageUrl = imageUrl;
             this.iconRes = iconRes;
         }
     }
@@ -760,9 +791,27 @@ public class HomeActivity extends AppCompatActivity {
             holder.tvTitle.setText(item.title);
             holder.tvDesc.setText(item.description);
             holder.imgIcon.setImageResource(item.iconRes);
-            holder.itemView.setOnClickListener(v ->
-                    Toast.makeText(holder.itemView.getContext(), "Tip: " + item.title, Toast.LENGTH_SHORT).show()
-            );
+
+            // Set Click Listener to open Detail Activity
+            holder.itemView.setOnClickListener(v -> {
+                Intent intent = new Intent(v.getContext(), TechTipDetailActivity.class);
+                intent.putExtra("TIP_TITLE", item.title);
+                intent.putExtra("TIP_CONTENT", item.fullContent);
+                intent.putExtra("TIP_IMAGE", item.imageUrl);
+                v.getContext().startActivity(intent);
+            });
+
+            // If the layout has a specific "Read Article" button/text, bind it too if available
+            View readMore = holder.itemView.findViewById(R.id.btn_read_more);
+            if (readMore != null) {
+                readMore.setOnClickListener(v -> {
+                    Intent intent = new Intent(v.getContext(), TechTipDetailActivity.class);
+                    intent.putExtra("TIP_TITLE", item.title);
+                    intent.putExtra("TIP_CONTENT", item.fullContent);
+                    intent.putExtra("TIP_IMAGE", item.imageUrl);
+                    v.getContext().startActivity(intent);
+                });
+            }
         }
 
         @Override
