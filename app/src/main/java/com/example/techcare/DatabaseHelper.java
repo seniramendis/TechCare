@@ -15,7 +15,7 @@ import java.util.Random;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "TechCare.db";
-    private static final int DATABASE_VERSION = 9;
+    private static final int DATABASE_VERSION = 10; // Ensure version is 10
 
     // Users Table
     private static final String TABLE_USERS = "users";
@@ -38,6 +38,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COL_SCHEDULE_DATE = "scheduled_date";
     private static final String COL_SCHEDULE_TIME = "scheduled_time";
     private static final String COL_TECHNICIAN = "technician_name";
+    // Column to track notification status
+    private static final String COL_NOTIFIED = "is_notified";
 
     // Reviews Table
     private static final String TABLE_REVIEWS = "reviews";
@@ -53,8 +55,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COL_DEV_NAME = "device_name";
     private static final String COL_DEV_MODEL = "device_model";
 
+    private Context mContext;
+
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        this.mContext = context;
     }
 
     @Override
@@ -78,7 +83,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 COL_BOOKING_IMAGE + " TEXT, " +
                 COL_SCHEDULE_DATE + " TEXT, " +
                 COL_SCHEDULE_TIME + " TEXT, " +
-                COL_TECHNICIAN + " TEXT)";
+                COL_TECHNICIAN + " TEXT, " +
+                COL_NOTIFIED + " INTEGER DEFAULT 0)";
         db.execSQL(createBookings);
 
         String createReviews = "CREATE TABLE " + TABLE_REVIEWS + " (" +
@@ -99,11 +105,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         if (oldVersion < 8) {
-            try {
-                db.execSQL("ALTER TABLE " + TABLE_USERS + " ADD COLUMN " + COL_PHONE + " TEXT");
-            } catch (Exception e) {
-                Log.e("DatabaseHelper", "Error upgrading to version 8", e);
-            }
+            try { db.execSQL("ALTER TABLE " + TABLE_USERS + " ADD COLUMN " + COL_PHONE + " TEXT"); }
+            catch (Exception e) { Log.e("DatabaseHelper", "Error upgrading to v8", e); }
         }
 
         if (oldVersion < 9) {
@@ -114,9 +117,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         COL_DEV_NAME + " TEXT, " +
                         COL_DEV_MODEL + " TEXT)";
                 db.execSQL(createDevices);
-            } catch (Exception e) {
-                Log.e("DatabaseHelper", "Error upgrading to version 9", e);
-            }
+            } catch (Exception e) { Log.e("DatabaseHelper", "Error upgrading to v9", e); }
+        }
+
+        if (oldVersion < 10) {
+            try {
+                db.execSQL("ALTER TABLE " + TABLE_BOOKINGS + " ADD COLUMN " + COL_NOTIFIED + " INTEGER DEFAULT 0");
+            } catch (Exception e) { Log.e("DatabaseHelper", "Error upgrading to v10", e); }
         }
     }
 
@@ -210,6 +217,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cv.put(COL_BOOKING_IMAGE, imageUri);
         cv.put(COL_SCHEDULE_DATE, date);
         cv.put(COL_SCHEDULE_TIME, time);
+        cv.put(COL_NOTIFIED, 0); // Notified = False initially
+
         String[] techs = {"John Doe", "Sarah Smith", "Mike Ross", "Emily Clark"};
         cv.put(COL_TECHNICIAN, techs[new Random().nextInt(techs.length)]);
         return db.insert(TABLE_BOOKINGS, null, cv) != -1;
@@ -220,11 +229,65 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return db.rawQuery("SELECT * FROM " + TABLE_BOOKINGS + " WHERE " + COL_USER_EMAIL + " = ? ORDER BY " + COL_BOOKING_ID + " DESC", new String[]{email});
     }
 
+    // [CRITICAL FIX] Logic to prevent spam notifications
     public boolean updateBookingStatus(int bookingId, String newStatus) {
         SQLiteDatabase db = this.getWritableDatabase();
+
+        // 1. Check the CURRENT status in the database first
+        String currentStatus = "";
+        Cursor cursor = db.rawQuery("SELECT " + COL_STATUS + " FROM " + TABLE_BOOKINGS + " WHERE " + COL_BOOKING_ID + " = ?", new String[]{String.valueOf(bookingId)});
+        if (cursor.moveToFirst()) {
+            currentStatus = cursor.getString(0);
+        }
+        cursor.close();
+
+        // 2. Prepare update
         ContentValues cv = new ContentValues();
         cv.put(COL_STATUS, newStatus);
-        return db.update(TABLE_BOOKINGS, cv, COL_BOOKING_ID + " = ?", new String[]{String.valueOf(bookingId)}) > 0;
+
+        // If status is NOT Completed, reset notification flag so we can notify again later
+        if (!"Completed".equalsIgnoreCase(newStatus)) {
+            cv.put(COL_NOTIFIED, 0);
+        }
+
+        int rows = db.update(TABLE_BOOKINGS, cv, COL_BOOKING_ID + " = ?", new String[]{String.valueOf(bookingId)});
+
+        // 3. Only Notify if:
+        //    a) The update was successful (rows > 0)
+        //    b) The NEW status is "Completed"
+        //    c) The OLD status was NOT "Completed" (Meaning it JUST changed)
+        if (rows > 0 && "Completed".equalsIgnoreCase(newStatus)) {
+            if (!"Completed".equalsIgnoreCase(currentStatus)) {
+                sendCompletionNotification(bookingId);
+                markAsNotified(bookingId);
+            }
+        }
+
+        return rows > 0;
+    }
+
+    private void markAsNotified(int bookingId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(COL_NOTIFIED, 1);
+        db.update(TABLE_BOOKINGS, cv, COL_BOOKING_ID + " = ?", new String[]{String.valueOf(bookingId)});
+    }
+
+    @SuppressLint("Range")
+    private void sendCompletionNotification(int bookingId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String deviceName = "Device";
+        Cursor cursor = db.rawQuery("SELECT " + COL_DEVICE + " FROM " + TABLE_BOOKINGS + " WHERE " + COL_BOOKING_ID + " = ?", new String[]{String.valueOf(bookingId)});
+        if (cursor.moveToFirst()) {
+            deviceName = cursor.getString(0);
+        }
+        cursor.close();
+
+        NotificationHelper.sendBookingNotification(
+                mContext,
+                "Ready for Pickup",
+                "Your " + deviceName + " is repaired and ready for pickup!"
+        );
     }
 
     // --- REVIEW METHODS ---
@@ -271,7 +334,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         return db.rawQuery("SELECT * FROM " + TABLE_DEVICES + " WHERE " + COL_DEV_EMAIL + " = ?", new String[]{email});
     }
-    
+
     public void deleteDevice(int deviceId) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete(TABLE_DEVICES, COL_DEV_ID + " = ?", new String[]{String.valueOf(deviceId)});
